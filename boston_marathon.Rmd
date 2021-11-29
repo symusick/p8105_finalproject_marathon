@@ -20,8 +20,9 @@ importing_data = function(x){
   if(str_detect(x, str_c(years_1, collapse = "|"))) {
   read_csv(x, na = c("NULL", "", "0"), col_types = "cicccciiiicc") 
   } 
-else if(str_detect(x, str_c(years_2, collapse = "|"))){
-    read_csv(x, na = c("NULL", "", "0"), col_types = "iccicccccccccccccccccciiiiccc")
+  
+  else if(str_detect(x, str_c(years_2, collapse = "|"))){
+    read_csv(x, na = c("NULL", "", "0"), col_types = "cccicccccccccccccccccciiiiccc")
   }
 }
 
@@ -31,10 +32,11 @@ boston_df <-
   mutate(data = map(file_name, importing_data)) %>% 
   unnest(data) %>% 
   mutate(year = readr::parse_number(file_name)) %>% 
-  select(-file_name)
+  filter(!is.na(display_name)) %>% 
+  select(-file_name) 
 
-view(problems(boston_df))
 
+  
 
   
 
