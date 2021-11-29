@@ -1,0 +1,43 @@
+---
+title: "Boston Marathon"
+output: github_document
+---
+
+```{r}
+library(tidyverse)
+library(viridis)
+library(ggridges)
+library(patchwork)
+```
+
+
+```{r}
+years_1 <- c(1897:2014)
+years_2 <- c(2015:2019)
+
+importing_data = function(x){
+ 
+  if(str_detect(x, str_c(years_1, collapse = "|"))) {
+  read_csv(x, na = c("NULL", "", "0"), col_types = "cicccciiiicc") 
+  } 
+else if(str_detect(x, str_c(years_2, collapse = "|"))){
+    read_csv(x, na = c("NULL", "", "0"), col_types = "iccicccccccccccccccccciiiiccc")
+  }
+}
+
+boston_df <- 
+  tibble(list.files("data", full.names = TRUE)) %>% 
+  setNames("file_name") %>% 
+  mutate(data = map(file_name, importing_data)) %>% 
+  unnest(data) %>% 
+  mutate(year = readr::parse_number(file_name)) %>% 
+  select(-file_name)
+
+view(problems(boston_df))
+
+
+  
+
+```
+
+
