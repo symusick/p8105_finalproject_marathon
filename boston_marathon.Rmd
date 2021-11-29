@@ -31,9 +31,10 @@ boston_df <-
   setNames("file_name") %>% 
   mutate(data = map(file_name, importing_data)) %>% 
   unnest(data) %>% 
-  mutate(year = readr::parse_number(file_name)) %>% 
+  mutate(year = readr::parse_number(file_name),
+         city = coalesce(city, residence)) %>% 
   filter(!is.na(display_name)) %>% 
-  select(-file_name) 
+  select(-file_name, -residence) 
 
 
   
