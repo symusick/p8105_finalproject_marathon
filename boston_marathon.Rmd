@@ -12,7 +12,7 @@ library(patchwork)
 
 
 ```{r}
-years_1 <- c(1897:2014)
+years_1 <- c(1900:2012, 2014)
 years_2 <- c(2015:2019)
 
 importing_data = function(x){
@@ -32,10 +32,12 @@ boston_df <-
   mutate(data = map(file_name, importing_data)) %>% 
   unnest(data) %>% 
   mutate(year = readr::parse_number(file_name),
-         city = coalesce(city, residence)) %>% 
+         city = coalesce(city, residence),
+         display_name = str_replace_all(display_name, "[^a-zA-Z0-9]", " ")) %>% 
   filter(!is.na(display_name)) %>% 
-  select(-file_name, -residence) 
-
+  select(-file_name, -residence, -first_name, -last_name)
+  
+  
 
   
 
