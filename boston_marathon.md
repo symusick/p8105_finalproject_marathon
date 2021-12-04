@@ -1,17 +1,33 @@
----
-title: "Boston Marathon"
-output: github_document
----
+Boston Marathon
+================
 
-```{r}
+``` r
 library(tidyverse)
+```
+
+    ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+
+    ## ✓ ggplot2 3.3.5     ✓ purrr   0.3.4
+    ## ✓ tibble  3.1.4     ✓ dplyr   1.0.7
+    ## ✓ tidyr   1.1.3     ✓ stringr 1.4.0
+    ## ✓ readr   2.0.1     ✓ forcats 0.5.1
+
+    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+    ## x dplyr::filter() masks stats::filter()
+    ## x dplyr::lag()    masks stats::lag()
+
+``` r
 library(viridis)
+```
+
+    ## Loading required package: viridisLite
+
+``` r
 library(ggridges)
 library(patchwork)
 ```
 
-
-```{r}
+``` r
 years_1 <- c(1900:2012, 2014)
 years_2 <- c(2015:2019)
 
@@ -36,14 +52,4 @@ boston_df <-
          display_name = str_replace_all(display_name, "[^a-zA-Z0-9]", " ")) %>% 
   filter(!is.na(display_name)) %>% 
   select(-file_name, -residence, -first_name, -last_name)
-  
-  
-
-
-  
-
-  
-
 ```
-
-
