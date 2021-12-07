@@ -1,24 +1,262 @@
 ---
-title: "Homework 2"
+title: "Data Science Geographical Analysis of Winners"
+author: "Sydney Musick (sm4993), Suhani Patel (sp3903), Tamara Hofer (th2891), Hugo Wang (xw2757), Claire Mobley (cm4070)"
+date: 2021-11-21
 output:
   html_document:
+    toc: TRUE
+    toc_float: TRUE
+    code_folding: hide
     theme: yeti
     highlight: haddock
 ---
 
-I'm an R Markdown document! 
-
-# Section 1
-
-Here's a **code chunk** that samples from 
-a _normal distribution_:
-
-```{r}
-samp = rnorm(100)
-length(samp)
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 ```
 
-# Section 2
+```{r}
+library(tidyverse)
+library(viridis)
+library(ggridges)
+library(patchwork)
+```
 
-I can take the mean of the sample, too!
-The mean is `r mean(samp)`.
+
+```{r}
+years_1 <- c(1900:2012, 2014)
+years_2 <- c(2015:2019)
+
+importing_data = function(x){
+ 
+  if(str_detect(x, str_c(years_1, collapse = "|"))) {
+  read_csv(x, na = c("NULL", "", "0"), col_types = "cicccciiiicc") 
+  } 
+  
+  else if(str_detect(x, str_c(years_2, collapse = "|"))){
+    read_csv(x, na = c("NULL", "", "0"), col_types = "cccicccccccccccccccccciiiiccc")
+  }
+}
+
+boston_df <- 
+  tibble(list.files("data", full.names = TRUE)) %>% 
+  setNames("file_name") %>% 
+  mutate(data = map(file_name, importing_data)) %>% 
+  unnest(data) %>% 
+  mutate(year = readr::parse_number(file_name),
+         city = coalesce(city, residence),
+         display_name = str_replace_all(display_name, "[^a-zA-Z0-9]", " ")) %>% 
+  filter(!is.na(display_name)) %>% 
+  select(-file_name, -residence, -first_name, -last_name)
+  
+  
+
+
+  
+
+  
+
+```
+
+
+```{r}
+library(readxl)
+library(leaflet)
+library(plotly)
+```
+
+# Geographical Analysis of Winners 
+
+## Overview 
+
+*****
+
+We were interested in creating a map with the locations where winners from the Boston marathon over the past 120 year are from. Additionally, we wanted to examine how the locations of winners changed over time. We also analyzed data from winners from the wheel chair division and compared results to the men and women open divsion. 
+
+## Data Cleaning
+
+*****
+
+```{r}
+boston_df2 = boston_df %>% 
+  filter(year > 1999) %>% 
+  filter(overall == 1) %>% 
+  filter(gender == "M") %>% 
+  select(year, city, state, overall, everything()) %>% 
+  drop_na(city) %>% 
+  separate(city, into = c("city", "state", "country"), sep = ",") %>% 
+  select(-country, -state) %>% 
+  writexl::write_xlsx("interactive_map_men.xlsx")
+
+boston_df3 = boston_df  %>% 
+  filter(year > 1999) %>% 
+  filter(gender_result == 1) %>% 
+  filter(gender == "F") %>% 
+  select(year, city, state, overall, everything()) %>% 
+  drop_na(city) %>% 
+  writexl::write_xlsx("interactive_map_women.xlsx")
+```
+
+```{r}
+map_df = read_excel("data/latitude_longitude_winners.xlsx", sheet = 1) %>% 
+  select(year, city, latitude, longitude, age, gender, official_time, display_name) %>% 
+  rename(place = city) 
+
+map_df2 = read_excel("data/latitude_longitude_winners.xlsx", sheet = 2) %>% 
+  select(year, city, latitude, longitude, age, gender, official_time, display_name) %>% 
+  rename(place = city) 
+```
+
+```{r}
+men_open = read_excel("data/geo_winners.xlsx", sheet = 4) %>% 
+  janitor::clean_names() %>% 
+  rename(place = country) %>% 
+  separate(official_time, into = c("data", "official_time"), sep = " (?=[^ ]+$)") %>% 
+  select(-data) 
+
+lat_long = read_excel("data/lat_long.xlsx") %>% 
+  select(-country) %>% 
+  rename(place = name)
+
+men_merge <- merge(men_open,lat_long,by="place") %>% 
+  rename(display_name = name) %>% 
+  mutate(gender = "M") 
+
+men_merge2 = men_merge %>% 
+  mutate(age = NA) %>% 
+  filter(year > 1900) %>% 
+  filter(year < 2000) 
+
+men_total = rbind(men_merge2, map_df)
+
+women_open = read_excel("data/geo_winners.xlsx", sheet = 3) %>% 
+  janitor::clean_names() %>% 
+  rename(place = country) %>% 
+  separate(official_time, into = c("data", "official_time"), sep = " (?=[^ ]+$)") %>% 
+  select(-data) 
+
+women_merge = merge(women_open, lat_long, by="place") %>% 
+  rename(display_name = name) %>% 
+  mutate(gender = "F") 
+  
+women_merge2 = women_merge %>% 
+  mutate(age = NA) %>% 
+  filter(year > 1900) %>% 
+  filter(year < 2000) 
+
+woman_total = rbind(women_merge2, map_df2) %>% 
+  drop_na(latitude)
+```
+  
+```{r}
+women_wheelchair = read_excel("data/geo_winners.xlsx", sheet = "women_wheel_chair") %>% 
+    janitor::clean_names() %>% 
+    separate(official_time, into = c("data", "official_time"), sep = " (?=[^ ]+$)") %>% 
+    select(-data) %>% 
+    mutate(gender = "F")
+
+men_wheelchair = read_excel("data/geo_winners.xlsx", sheet = "men_wheel_chair") %>% 
+    janitor::clean_names() %>% 
+    separate(official_time, into = c("data", "official_time"), sep = " (?=[^ ]+$)") %>% 
+    select(-data) %>% 
+    mutate(gender = "M")
+
+wheelchair_merge = rbind(women_wheelchair, men_wheelchair) %>% 
+  rename(place = country)
+
+wheelchair_total = merge(wheelchair_merge, lat_long, by="place") %>% 
+  filter(!(year == 2013))
+```
+
+* We cleaned data by filtering for the winners from the men and women's open division. 
+* Some state data was wrongly included into the variable for city and was reorganized. 
+* Because we were interested in created a map, needed to create latitude and longitude data for the state's and city's winners were from. To do this, exported and loaded our data into Excel and auto-populated the latitude and longitude using Excel's "Geography" feature which can conver geography type data into latitude and longitude. We used the following instruction to covert the data: https://www.mrexcel.com/excel-tips/find-latitude-and-longitude-for-each-city-in-excel/. 
+* Data on the city and/or state a participant was from was only available for the year 2000 and beyond. After graphing this data, we were displeased with the lack of data over time as we only had datapoints for the year 2000 and beyond. Thus, found an additional dataset that would provide information on the locations winners pre-2000 were from using this website: https://www.baa.org/races/boston-marathon/results/champions. 
+* While our geography data included the countries that each winner was from, our origional dataset included more precise locations, the city and the state a participant was from as well as the participants age. Because of this, we used the data available from our origional dataset (the years 2000 and beyond) and combined the missing years for our new data set (pre-2000) to create a map of locations winners were from.
+* When importing our geography data, the official times of runners was imported as a date and a time. We separate this variable and deleted the incorrect protion of this variable. 
+* Because our geograpy data only inlcuded countries were winners were from, we could not use Excel's "Geography" feature. Instead, we found a dataset with the latitude and longitude of common countries throughout the world and merged this dataset by country to add latitude and longitude data. 
+* To combine our origional data and our geography data, we used rbind to vertically merge the datasets. Prior to binding the datasets, we had to ensure the variables in both datasets were named the exact same. Because our origional dataset included age as a variable and we wanted to include it, where possible, in our map, we created a blank age variable in our geography dataset prior to binding. 
+* In the fully binded dataset, we dropped any missing latitide or longitude values. 
+* Using the geophraphy data, we cleaned the wheel chair data to a process similar to above. We additionally excluded the year 2013 due to the bombing. 
+
+
+## Plots
+
+*****
+
+### Map of Male Winners 
+```{r}
+map_winners = leaflet(men_total) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addMarkers(lat = ~latitude, lng = ~longitude,
+  popup = paste("Name:", men_total$display_name, "<br>", "Year:", men_total$year,"<br>",  "Official Time:", men_total$official_time, "<br>", "Age:", men_total$age, "<br>", "Gender:", men_total$gender), clusterOptions = markerClusterOptions())
+
+map_winners
+```
+
+The continent with the largest nuber of male winners from 1900 and beyond is North American, specifically the US, followed by Africa. There are 44 winners from the United States, 20 from Kenya, 10 from Japan. 
+
+*****
+
+### Map of Female Winners 
+```{r}
+map_winners_women = leaflet(woman_total) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addMarkers(lat = ~latitude, lng = ~longitude,
+  popup = paste("Name:", woman_total$display_name, "<br>", "Year:", woman_total$year,"<br>",  "Official Time:", woman_total$official_time, "<br>", "Age:", woman_total$age, "<br>", "Gender:", woman_total$gender), clusterOptions = markerClusterOptions())
+
+map_winners_women
+```
+
+This is in contrast to female winners from 1900 and beyond where Africa is the continent with the most winners, closely followed by Europe, and North America. Most of the female winners in Africa are from Kenya. The map for female winners suggests that a participants proximinity to Boston likely does not play a role in their probability of winning the marathon.
+
+*****
+
+### Plot of Officials Times of Winners by Year in Open Division
+```{r}
+winners_bind = rbind(women_merge, men_merge)
+
+plot2 = winners_bind %>%
+  plot_ly(
+    x = ~year, y = ~official_time, color = ~place,
+    type = "scatter") %>%
+    layout(
+    title = "Official Times of Male and Female Winners each Year by Winner's Country")
+
+plot2
+```
+
+Over time, the winning time for both male and female winners has declined. While prior to 1950, most of the winners were from the United States, most of the winners are from Kenya. Additionally, we can see that the lowest marathon times have been from people from Kenya. 
+
+*****
+
+### Map of Winners in Wheel Chair Division
+```{r}
+map_wheelchair = leaflet(wheelchair_total) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addMarkers(lat = ~latitude, lng = ~longitude,
+  popup = paste("Name:", wheelchair_total$name, "<br>", "Year:", wheelchair_total$year,"<br>", "Official Time:", wheelchair_total$official_time, "<br>", "Gender:", wheelchair_total$gender), clusterOptions = markerClusterOptions())
+
+map_wheelchair
+```
+
+
+When assessing wheel chair division map, we can see that 25 winners are from the United States, followed by 19 from Europe, and 10 from Africa. While the male and female open division lack winners from Switzerland, there are 15 winners in the wheel chair division from Switzerland. 
+
+
+*****
+
+### Plot of Official Times of Winners by Year in Wheel Chair Division 
+```{r}
+plot3 = wheelchair_total %>%
+  plot_ly(
+    x = ~year, y = ~official_time, color = ~place,
+    type = "scatter") %>%
+    layout(
+    title = "Official Times of Winners each Year in Wheel Chair Division")
+
+plot3
+```
+
+While there is a downward trend in official times for the open division, there is no trend in official times over time. Many of the winners pre-2000 are from the United States while many of the winners post-2000 are from South Africa. The lowest time recorded is from an individual in Switzerland. 
+
