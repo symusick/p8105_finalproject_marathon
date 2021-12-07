@@ -184,42 +184,163 @@ boston_df <-
   select(-file_name, -residence, -first_name, -last_name)
 ```
 
-
+## Creating dataset for regression
 ```{r}
 regression_df = boston_df %>%
-  select(seconds, age, country_residence, gender, year, half) %>%
+  select(seconds, age, country_residence, gender, year, half, "5k") %>%
   mutate(half = replace(half, half == "-", "")) %>%  
   drop_na() %>%
-  mutate(regression_df[regression_df==""]<-NA %>%
+  mutate(halftime = hms(half)) %>%
   drop_na() %>%
-  mutate(time = hms(half))
-
-  
-  
- 
-
+  mutate(half_seconds = hour(halftime)*3600 + minute(halftime)*60 + second(halftime)) %>%
+  rename(fivek = "5k") %>%
+  mutate(fivetime = hms(fivek)) %>%
+  drop_na() %>%
+  mutate(fivek_seconds = hour(fivetime)*3600 + minute(fivetime)*60 + second(fivetime))
 ```
 
+
+## Model1 - age, gender, country
 ```{r}
 model1 = lm(seconds ~ age + gender + country_residence, data = regression_df)
-
-summary(model1)
 
 model1 %>% 
   broom::tidy() %>% 
   knitr::kable(digits = 3)
 ```
 
+## Creating male and female datasets
 ```{r}
-regression_df = regression_df %>%
-    mutate(half_seconds = hour(time)*3600 + minute(time)*60 + second(time))
+regression_male_df = regression_df %>%
+  filter(gender == "M")
 
+regression_female_df = regression_df %>%
+  filter(gender == "F")
 ```
 
+## Model2 - age, country by gender
 ```{r}
-colSums(is.na(regression_df))
+model2_male = lm(seconds ~ age + country_residence, data = regression_male_df)
+
+model2_male %>% 
+  broom::tidy() %>% 
+  knitr::kable(digits = 3)
+
+
+model2_female = lm(seconds ~ age + country_residence, data = regression_female_df)
+
+model2_female %>% 
+  broom::tidy() %>% 
+  knitr::kable(digits = 3)
 ```
 
-unlist(strsplit("half", "[[:space:]]+"))
+## Model3 - age, continent by gender
+```{r}
+model3_male = lm(seconds ~ age + continent, data = regression_male_df)
 
+model3_male %>% 
+  broom::tidy() %>% 
+  knitr::kable(digits = 3)
+
+
+model3_female = lm(seconds ~ age + continent, data = regression_female_df)
+
+model3_female %>% 
+  broom::tidy() %>% 
+  knitr::kable(digits = 3)
+```
+
+## Model4 - age, ???, 5k by gender
+```{r}
+model4_male = lm(seconds ~ age + country_residence + fivek_seconds, data = regression_male_df)
+
+model4_male %>% 
+  broom::tidy() %>% 
+  knitr::kable(digits = 3)
+
+
+model4_female = lm(seconds ~ age + country_residence + fivek_seconds, data = regression_female_df)
+
+model4_female %>% 
+  broom::tidy() %>% 
+  knitr::kable(digits = 3)
+```
+
+## Model5 - age, ???, half by gender
+```{r}
+model5_male = lm(seconds ~ age + continent + half_seconds, data = regression_male_df)
+
+model5_male %>% 
+  broom::tidy() %>% 
+  knitr::kable(digits = 3)
+
+
+model5_female = lm(seconds ~ age + continent + half_seconds, data = regression_female_df)
+
+model5_female %>% 
+  broom::tidy() %>% 
+  knitr::kable(digits = 3)
+```
+
+## Comparing models for males
+```{r}
+crossv_male = 
+  crossv_mc(regression_male_df, 100) %>% 
+  mutate(train = map(train, as_tibble), test = map(test, as_tibble))
+
+crossv_male = crossv_male %>% 
+  mutate(
+    model2_male = map(train, ~lm(seconds ~ age + country_residence, data = .x)),
+    model3_male = map(train, ~lm(seconds ~ age + continent, data = .x)) %>% 
+    model4_male = map(train, ~lm(seconds ~ age + ??? + fivek_seconds, data = .x)) %>% 
+    model5_male = map(train, ~lm(seconds ~ age + ??? + half_seconds, data = .x))) %>% 
+  mutate(
+    rmse_model2_male = map2_dbl(model2_male, test, ~rmse(model = .x, data = .y)),
+    rmse_model3_male = map2_dbl(model3_male, test, ~rmse(model = .x, data = .y)),
+    rmse_model4_male = map2_dbl(model4_male, test, ~rmse(model = .x, data = .y)),
+    rmse_model5_male = map2_dbl(model5_male, test, ~rmse(model = .x, data = .y))) %>%
+  select(starts_with("rmse")) %>%  
+  pivot_longer(
+    everything(),
+    names_to = "model", 
+    values_to = "rmse",
+    names_prefix = "rmse_") %>% 
+  mutate(model = fct_inorder(model)) 
+
+ggplot(crossv_male, aes(x = model, y = rmse)) +
+geom_boxplot() +
+labs(x = "Model", y = "RMSE") +
+ggtitle("RMSE for Model 2, Model 3, Model 4, and Model 5 among Males") 
+```
+
+## Comparing models for females
+```{r}
+crossv_female = 
+  crossv_mc(regression_female_df, 100) %>% 
+  mutate(train = map(train, as_tibble), test = map(test, as_tibble))
+
+crossv_female = crossv_female %>% 
+  mutate(
+    model2_female = map(train, ~lm(seconds ~ age + country_residence, data = .x)),
+    model3_female = map(train, ~lm(seconds ~ age + continent, data = .x)) %>% 
+    model4_female = map(train, ~lm(seconds ~ age + ??? + fivek_seconds, data = .x)) %>% 
+    model5_female = map(train, ~lm(seconds ~ age + ??? + half_seconds, data = .x))) %>% 
+  mutate(
+    rmse_model2_female = map2_dbl(model2_female, test, ~rmse(model = .x, data = .y)),
+    rmse_model3_female = map2_dbl(model3_female, test, ~rmse(model = .x, data = .y)),
+    rmse_model4_female = map2_dbl(model4_female, test, ~rmse(model = .x, data = .y)),
+    rmse_model5_female = map2_dbl(model5_female, test, ~rmse(model = .x, data = .y))) %>%
+  select(starts_with("rmse")) %>%  
+  pivot_longer(
+    everything(),
+    names_to = "model", 
+    values_to = "rmse",
+    names_prefix = "rmse_") %>% 
+  mutate(model = fct_inorder(model)) 
+
+ggplot(crossv_female, aes(x = model, y = rmse)) +
+geom_boxplot() +
+labs(x = "Model", y = "RMSE") +
+ggtitle("RMSE for Model 2, Model 3, Model 4, and Model 5 among Females") 
+```
 
