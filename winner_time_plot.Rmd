@@ -1,13 +1,12 @@
 ---
 title: "Winner over time"
-output: github_document
+output: html_document
 ---
 
 ```{r}
 library(tidyverse)
 library(viridis)
-library(ggridges)
-library(patchwork)
+
 library(plotly)
 library(hms)
 
@@ -63,6 +62,7 @@ boston_df <-
 winners_df = 
   boston_df %>% 
     mutate(
+      year = as.factor(year),
       official_time = as.hms(official_time, tz = ""),
       pace = as.hms(pace, tz = "", format = "%H:%M:%S"),
       place_overall = as.numeric(place_overall)
@@ -85,4 +85,24 @@ ggplot(aes(x = year, y = official_time, group = 1)) +
       
 ```
 
+Plotly 
 
+Try with seconds -- link the official time
+- specify range on y-axis
+
+
+```{r}
+winners_df %>% 
+  filter(overall == 1) %>% 
+  plot_ly(type = 'scatter', mode = 'lines', text = ~paste('Name: ', display_name)) %>% 
+  add_trace(x = ~year, y = ~official_time)%>% 
+  layout(yaxis = list(categoryorder = "array", categoryarray = winners_df$official_time))
+  
+
+```
+
+ layout(yaxis = list(categoryorder = "total ascending"))
+
+
+age x year (intervals?)
+pace x year plot?
