@@ -193,6 +193,141 @@ boston_df <-
 
 # CLAIRE
 
+## Prepare age data
+
+```{r}
+boston_df_age_plot =
+  boston_df %>% 
+  select(age) %>%
+  drop_na(age)
+```
+
+## Age distribution overall (counts)
+
+This is plotly: 
+
+```{r}
+age_plotly_original = 
+boston_df_age_plot %>% 
+  count(age) %>% 
+ plot_ly(
+      x = ~age, y = ~n, color = ~age,
+      type = "bar", colors = "viridis") %>% 
+  layout(
+    xaxis = list(title = "Age"),
+    yaxis = list(title = "Number of Participants")
+)
+```
+
+This is plain ggplot:
+
+```{r}
+age_ggplot = 
+ggplot(boston_df_age_plot, aes(x = age)) +
+  geom_bar(fill = "cornflowerblue", 
+                 color = "white") +
+  labs(title = "Participants by age", 
+       subtitle = "binwidth = 5 years",
+       x = "Age", y = "Number of participants")
+```
+
+This is plotly from ggplot: 
+
+```{r}
+ggplotly(age_ggplot)
+```
+
+## Histogram of percentages by age 
+
+```{r}
+age_percentage_ggplot = 
+  ggplot(boston_df_age_plot, 
+       aes(x = age, 
+           y = ..count.. / sum(..count..))) +
+  geom_histogram(fill = "cornflowerblue", 
+                 color = "white", 
+                 binwidth = 5) + 
+  labs(title = "Participants by age", 
+       y = "Percent",
+       x = "Age") +
+  scale_y_continuous(labels = percent)
+```
+
+plotly:
+
+```{r}
+ggplotly(age_percentage_ggplot)
+```
+
+## Density plot ages
+
+```{r}
+density_plot = 
+boston_df_age_plot %>%
+  ggplot(aes(x = age)) +
+    geom_density(fill = "cornflowerblue", color = "black", alpha = 0.8) +
+    ggtitle("Distribution of age")
+```
+
+```{r}
+ggplotly(density_plot)
+```
+
+## DATA CLEAN GENDER CODE##
+? not sure if we want to put this at top data clean maybe need to decide how much it affects other plots?
+
+```{r}
+boston_df_gender =
+    boston_df %>%
+    select(gender) %>%
+    mutate(gender = na_if(gender, "U"), 
+            gender = recode(gender, m = "M"),
+           gender = factor(gender, levels = c("M", "F"), labels = c("male", "female"))) %>% 
+  drop_na(gender) %>% 
+  count(gender)
+```
+
+## Participants by gender (%'s)
+
+```{r}
+bar_graph_gender = boston_df_gender %>%
+  mutate(pct = n / sum(n),
+         pctlabel = paste0(round(pct*100), "%"))
+
+# plot the bars as percentages, 
+# in decending order with bar labels
+ggplot(bar_graph_gender, 
+       aes(x = reorder(gender, -pct),
+           y = pct)) + 
+  geom_bar(stat = "identity", 
+           fill = "indianred3", 
+           color = "black") +
+  geom_text(aes(label = pctlabel), 
+            vjust = -0.25) +
+  scale_y_continuous(labels = percent) +
+  labs(x = "Gender", 
+       y = "Percent", 
+       title  = "Participants by gender")
+```
+
+# Participants by gender (counts)
+
+```{r}
+bar_graph_frequency = 
+ggplot(bar_graph_gender, 
+       aes(x = gender, 
+           y = n)) + 
+  geom_bar(stat = "identity", 
+           fill = "indianred3",
+           color = "black") +
+  geom_text(aes(label = n), 
+            vjust = -0.5) +
+ scale_y_continuous(labels = scales::comma) +
+  labs(x = "Gender", 
+       y = "Frequency", 
+       title  = "Participants by gender")
+```
+
 
 # SYDNEY
 
