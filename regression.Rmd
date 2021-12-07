@@ -1,16 +1,16 @@
 ---
-title: "Boston Marathon"
+title: "regression"
 output: github_document
 ---
-
 ```{r}
 library(tidyverse)
 library(viridis)
 library(ggridges)
 library(patchwork)
+library(lubridate)
 ```
 
-# DATA CLEANING (HUGO)
+
 ```{r}
 years_1 <- c(1900:2012, 2014)
 years_2 <- c(2015:2019)
@@ -185,16 +185,41 @@ boston_df <-
 ```
 
 
-# SUHANI
+```{r}
+regression_df = boston_df %>%
+  select(seconds, age, country_residence, gender, year, half) %>%
+  mutate(half = replace(half, half == "-", "")) %>%  
+  drop_na() %>%
+  mutate(regression_df[regression_df==""]<-NA %>%
+  drop_na() %>%
+  mutate(time = hms(half))
 
+  
+  
+ 
 
-# TAMARA
+```
 
+```{r}
+model1 = lm(seconds ~ age + gender + country_residence, data = regression_df)
 
-# CLAIRE
+summary(model1)
 
+model1 %>% 
+  broom::tidy() %>% 
+  knitr::kable(digits = 3)
+```
 
-# SYDNEY
+```{r}
+regression_df = regression_df %>%
+    mutate(half_seconds = hour(time)*3600 + minute(time)*60 + second(time))
 
+```
+
+```{r}
+colSums(is.na(regression_df))
+```
+
+unlist(strsplit("half", "[[:space:]]+"))
 
 
