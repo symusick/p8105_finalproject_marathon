@@ -11,6 +11,8 @@ output:
     highlight: haddock
 ---
 
+
+
 ```{r setup, include=FALSE} 
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 ```
@@ -26,7 +28,7 @@ library(leaflet)
 library(plotly)
 ```
 
-# DATA CLEANING 
+## Data Cleaning
 ```{r}
 years_1 <- c(1900:2012, 2014)
 years_2 <- c(2015:2019)
@@ -355,11 +357,16 @@ This is in contrast to female winners from 1900 and beyond where Africa is the c
 winners_bind = rbind(women_merge, men_merge)
 
 plot2 = winners_bind %>%
+  mutate(text_label = 
+           str_c("Name: ", display_name, "\nGender: ", gender)) %>% 
   plot_ly(
-    x = ~year, y = ~official_time, color = ~place,
-    type = "scatter") %>%
-    layout(
-    title = "Official Times of Male and Female Winners each Year by Winner's Country")
+    x = ~year, y = ~official_time, text = ~text_label, color = ~place,
+    type = "scatter") %>% 
+  layout(
+    title = "Official Times of Male and Female Winners each Year by Winner's Country",
+    xaxis = list(title = 'Year'),
+    yaxis = list(title = 'Marathon Time'), 
+    legend = list(title=list(text='Residence')))
 
 plot2
 ```
@@ -387,13 +394,121 @@ When assessing wheel chair division map, we can see that 25 winners are from the
 ### Plot of Official Times of Winners by Year in Wheel Chair Division 
 ```{r}
 plot3 = wheelchair_total %>%
+  mutate(text_label = 
+           str_c("Name: ", name, "\nGender: ", gender)) %>% 
   plot_ly(
-    x = ~year, y = ~official_time, color = ~place,
-    type = "scatter") %>%
-    layout(
-    title = "Official Times of Winners each Year in Wheel Chair Division")
+    x = ~year, y = ~official_time, text = ~text_label, color = ~place,
+    type = "scatter") %>% 
+  layout(
+    title = 'Official Times of Winners each Year in Wheel Chair Division',
+    xaxis = list(title = 'Year'),
+    yaxis = list(title = 'Marathon Time'), 
+    legend = list(title=list(text='Residence')))
 
 plot3
 ```
 
 While there is a downward trend in official times for the open division, there is no trend in official times over time. Many of the winners pre-2000 are from the United States while many of the winners post-2000 are from South Africa. The lowest time recorded is from an individual in Switzerland. 
+
+*****
+
+# Weather Analysis
+
+```{r}
+library(ggplot2)
+```
+
+
+## Data Cleaning
+
+*****
+
+```{r}
+weather = read_excel("data/weather_conditions.xlsx") %>% 
+  janitor::clean_names() %>% 
+  filter(!(year == 2013)) %>% 
+  separate(wind, into = c("wind_direction", "wind_speed"), sep = "\\s")  %>% 
+  separate(wind_speed, into = c("wind_min", "wind_max"), sep = "-") %>% 
+  mutate(wind_min = as.numeric(wind_min)) %>% 
+  mutate(wind_max = as.numeric(wind_max)) %>% 
+  mutate(wind_speed_average = (wind_min + wind_max)/2)
+
+weather2 = weather %>% 
+  select(boston_temp, year, wind_speed_average) %>% 
+  filter(!(year == 2021)) 
+
+winners_bind2 = winners_bind  %>% 
+   filter(year > 1999) 
+  
+merge_weather2 <- merge(weather2,winners_bind2,by="year")
+  
+```
+
+* We cleaned data by cleaning up variable names using janitor::clean_names. We also filter out for 2013, the year of the bombing. 
+* We sparated the wind variable into direction, min, and max and created an additional variable that takes the average of the wind min and max speed. 
+* We merged this dataset with a dataset with official times to see the relationship between champion winning time and weather. 
+
+## Plots
+
+*****
+
+### Map of Weather during Boston Marathon
+```{r}
+plot4 = weather %>%
+  mutate(text_label = 
+           str_c("Wind Speed Average: ", wind_speed_average)) %>%
+  plot_ly(x = ~year, y = ~boston_temp, text = ~text_label, color= ~ sky, size = ~wind_speed_average,
+          type = "scatter", mode = "markers",  colors = "viridis", 
+          sizes = c(50, 700), marker = list(opacity = 0.7)) %>%
+  layout(
+    title = 'Weather over Time',
+    xaxis = list(title = 'Year'),
+    yaxis = list(title = 'Boston Temperature'), 
+    legend = list(title=list(text='Sky')))
+
+plot4
+```
+*Note datapoint size is related to wind speed.
+
+Over the past 20 years, the temperature in Boston has generally stayed between 40-70 degrees and is usually a clear day. In 2012, there was a particularly hot marathon day with the tempature in the high 80's. Over the past few years, there has been relativly low wind speeds on average with exception to 2015. 
+
+*****
+
+### Wind Analysis during Boston Marathon
+```{r}
+ggplot(data = weather)+
+  geom_segment(aes(x = year, xend = year, y = wind_min, yend = wind_max, colour = wind_direction), size = 5, alpha = 0.6) + 
+  labs(
+    title = "Wind Speed During Boston's Marathon Over Time",
+    x = "Year",
+    y = "Wind Speed Range (mph)",
+    color='Wind Direction')
+```
+
+In the early 2000's, the wind direction was generally toward the North/north east and recently has been generally toward the west, northwest direction. There has been relatively low wind speed with little wind speed varability the past few years during the Boston marathon. Around 2010, there are relatively higher wind speeds. In 2007, there was a particularly windy marathon with speeds ranging from 20-30 mph. 
+
+*****
+
+### Comparison between Chamption Times and Weather 
+```{r}
+plot5 = merge_weather2 %>%
+  mutate(text_label = 
+           str_c("Name: ", display_name, "\nYear: ", year, "\nResidence: place")) %>% 
+ plot_ly(
+    x = ~boston_temp, y = ~official_time,  text = ~text_label, color = ~gender, size = ~wind_speed_average,
+          type = "scatter", mode = "markers",  colors = "viridis", 
+          sizes = c(50, 700), marker = list(opacity = 0.7)) %>%
+  layout(
+    title = 'Champion Times by Temperature',
+    xaxis = list(title = "Boston's Temperature"),
+    yaxis = list(title = 'Official Time'), 
+    legend = list(title=list(text='Gender')))
+
+plot5
+```
+*Note datapoint size is related to wind speed.
+
+The fastest marathon times in the past 20 years have occured when the temperature is around 55 degrees for men and around 60 degrees for woman. At temperatures 55 and below as well as 85 and above, there tends to be higher wind speeds. Although there are only a few datapoints above 70 degrees, one may hypothesize from the graph that as temperature increases, the fastest marathon time also increases. 
+
+
+
