@@ -1,5 +1,5 @@
 ---
-title: "Data Science Geographical Analysis of Winners"
+title: "Data Science Final Project"
 author: "Sydney Musick (sm4993), Suhani Patel (sp3903), Tamara Hofer (th2891), Hugo Wang (xw2757), Claire Mobley (cm4070)"
 date: 2021-11-21
 output:
@@ -15,14 +15,18 @@ output:
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 ```
 
+
 ```{r}
 library(tidyverse)
 library(viridis)
 library(ggridges)
 library(patchwork)
+library(readxl)
+library(leaflet)
+library(plotly)
 ```
 
-
+# DATA CLEANING 
 ```{r}
 years_1 <- c(1900:2012, 2014)
 years_2 <- c(2015:2019)
@@ -197,12 +201,7 @@ boston_df <-
 ```
 
 
-
-```{r}
-library(readxl)
-library(leaflet)
-library(plotly)
-```
+# SUHANI
 
 # Geographical Analysis of Winners 
 
@@ -398,4 +397,3 @@ plot3
 ```
 
 While there is a downward trend in official times for the open division, there is no trend in official times over time. Many of the winners pre-2000 are from the United States while many of the winners post-2000 are from South Africa. The lowest time recorded is from an individual in Switzerland. 
-
