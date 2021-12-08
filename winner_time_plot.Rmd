@@ -14,6 +14,8 @@ library(lubridate)
 library(httr)
 library(rvest)
 
+library(patchwork)
+
 knitr::opts_chunk$set(
   echo = TRUE,
   warning = FALSE, 
@@ -147,7 +149,6 @@ plotly_win_df %>%
 Marathon records -- adding new dataset 
 ```{r}
 
-
 records_html = 
   read_html("https://www.topendsports.com/sport/athletics/record-marathon.htm")
 
@@ -158,28 +159,33 @@ record_marathon =
   html_table(fill = T) %>% 
   lapply(., function(x) setNames(x, c("time", "date", "athlete", "country", "marathon"))) 
 
-marathon = 
+marathon_records = 
 record_marathon %>% 
   as.data.frame() %>% 
   mutate(
-    time = as_hms(time),
+    time = as.POSIXct(time, format = "%H:%M:%OS"),
   ) %>% 
   separate(date, into = c("month", "day", "year")) %>% 
     mutate(year = as.numeric(year)) %>% 
     select(-month, -day)
 
-marathon %>% 
-plot_ly(type = 'scatter', mode = 'lines', text = ~paste('Name: ', athlete)) %>% 
-  add_trace(x = ~year, y = ~time)%>% 
-  layout(yaxis = list(categoryorder = "array", categoryarray = winners_df$official_time))
 
-
-library(purrr)
-library(lubridate)
-
-
+record_times = 
+marathon_records %>% 
+  plot_ly(
+    x = ~year, y = ~format(time, "%H:%M:%OS"),
+    mode = 'lines', type = 'scatter',
+    name = "Marathon Record Times",
+    hoverinfo = "text", text = ~paste0(
+        "Name: ", athlete, 
+        "\n", "Year: ", year,
+        "\n", "Time: ", format(time, "%H:%M:%OS"),
+        "\n", "Marathon: ", marathon)) %>% 
+  layout(
+    title = "Record Marathon Times by Year",
+         xaxis = list(title = "Year"),
+         yaxis = list(title = "Official Time"))  
   
-
 ```
 
 
