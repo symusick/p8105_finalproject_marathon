@@ -530,6 +530,8 @@ plot6 = merge_weather_participants %>%
 plot6
 ```
 
+As temperature increases, the median marathon time among participants also increases also slightly increases. Furthermore, the lowested median marathon times occur around 55 degrees. We also see that there are many outliers in the higher timepoints. 
+
 # TAMARA
 
 

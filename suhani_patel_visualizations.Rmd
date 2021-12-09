@@ -515,7 +515,7 @@ plot5
 ```
 *Note datapoint size is related to wind speed.
 
-The fastest marathon times in the past 20 years have occured when the temperature is around 55 degrees for men and around 60 degrees for woman. At temperatures 55 and below as well as 85 and above, there tends to be higher wind speeds. Although there are only a few datapoints above 70 degrees, one may hypothesize from the graph that as temperature increases, the fastest marathon time also increases. 
+The fastest marathon times in the past 20 years have occured when the temperature is around 55 degrees for men and around 60 degrees for woman. At temperatures 55 and below as well as 85 and above, there tends to be higher wind speeds. 
 
 *****
 
@@ -533,4 +533,4 @@ plot6 = merge_weather_participants %>%
 plot6
 ```
 
-
+As temperature increases, the median marathon time among participants also increases also slightly increases. Furthermore, the lowested median marathon times occur around 55 degrees. We also see that there are many outliers in the higher timepoints. 
