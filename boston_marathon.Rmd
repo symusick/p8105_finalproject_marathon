@@ -24,6 +24,7 @@ library(patchwork)
 library(readxl)
 library(leaflet)
 library(plotly)
+library(scales)
 ```
 
 # DATA CLEANING (HUGO)
