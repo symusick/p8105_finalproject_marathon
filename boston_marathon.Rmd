@@ -26,6 +26,8 @@ library(leaflet)
 library(plotly)
 library(scales)
 library(ggplot2)
+library(httr)
+library(rvest)
 ```
 
 # DATA CLEANING (HUGO)
@@ -502,6 +504,100 @@ plot6
 As temperature increases, the median marathon time among participants also increases also slightly increases. Furthermore, the lowested median marathon times occur around 55 degrees. We also see that there are many outliers in the higher timepoints. 
 
 # TAMARA
+
+#### cleaning data for winner over time plots 
+
+We are interested in looking at the trends of the winning Boston Marathon times from the 1900's to 2019. 
+To do this we first needed to convert data and time variables from `character` to `POSIXCT`. 
+
+```{r}
+plotly_win_df = 
+  boston_df %>% 
+    mutate(
+      official_time = as.POSIXct(official_time, format = "%H:%M:%OS"), 
+      year = as.factor(year),
+      pace = as.POSIXct(pace, format = "%H:%M:%OS"),
+      place_overall = as.numeric(place_overall)
+    )
+
+```
+
+From here with the cleaned up variables, we filtered the data set to just show the overall winners.
+
+```{r}
+
+plotly_win_df %>% 
+  filter(overall == 1) %>% 
+  plot_ly(x = ~year, y = ~format(official_time, "%H:%M:%OS"), 
+          mode = 'lines', type = 'scatter',
+          name = 'Boston Winners',
+          hoverinfo = "text",
+          text = 
+            ~paste0("Name: ", display_name,
+                    "\n", "Year: ", year,
+            "\n", "Time: ", format(official_time, "%H:%M:%OS"),
+            "\n", "Pace: ", format(pace, "%H:%M:%OS"))) %>% 
+  layout(
+    title = "Boston Marathon Winners by Year",
+         xaxis = list(title = "Year"),
+         yaxis = list(title = "Official Time"))
+
+
+```
+
+This plot shows that over time, the Boston marathon winners are getting faster. There also seems to be some data that was recorded incorectly. Jim Knaub and Franz Nietlispach are reported as having an official time of 1:22:17 and 1:25:59 but the fastest marathon ever run is 1:59 (though not recorded officially, https://www.nytimes.com/2019/10/12/sports/eliud-kipchoge-marathon-record.html)
+
+The fastest time ever run (excluding the sub two hour times) for the Boston Marathon was run by Martin E Duffy in 1975, with a time of 2:04:54. 
+
+
+## How do the Boston Marathon winners compare to the record marathon time for the same year? 
+
+
+To compare the Boston Marathon with the record marathon times, we found a table from www.topendsports.com where they recorded the fastest marathon time for that year starting from 1908 to 2018 (though not every year is included). 
+
+
+The plot shows the dramatic decrease in fastest recorded marathon times over the years. In 1908 the fastest recorded time was run by Johnny Hayes in the London Marathon in 2:55:18, compared to the current record holder, Eliud Kipchoge, running the 2:01:39 in the Berlin Marathon in 2018. 
+
+
+```{r}
+
+records_html = 
+  read_html("https://www.topendsports.com/sport/athletics/record-marathon.htm")
+
+
+record_marathon =
+  records_html %>% 
+  html_nodes("table") %>% 
+  html_table(fill = T) %>% 
+  lapply(., function(x) setNames(x, c("time", "date", "athlete", "country", "marathon"))) 
+
+marathon_records = 
+record_marathon %>% 
+  as.data.frame() %>% 
+  mutate(
+    time = as.POSIXct(time, format = "%H:%M:%OS"),
+  ) %>% 
+  separate(date, into = c("month", "day", "year")) %>% 
+    mutate(year = as.numeric(year)) %>% 
+    select(-month, -day)
+
+
+marathon_records %>% 
+  plot_ly(
+    x = ~year, y = ~format(time, "%H:%M:%OS"),
+    mode = 'lines', type = 'scatter',
+    name = "Marathon Record Times",
+    hoverinfo = "text", text = ~paste0(
+        "Name: ", athlete, 
+        "\n", "Year: ", year,
+        "\n", "Time: ", format(time, "%H:%M:%OS"),
+        "\n", "Marathon: ", marathon)) %>% 
+  layout(
+    title = "Record Marathon Times by Year",
+         xaxis = list(title = "Year"),
+         yaxis = list(title = "Official Time")) 
+  
+```
 
 
 # CLAIRE
