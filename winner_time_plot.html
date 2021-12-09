@@ -265,7 +265,7 @@ boston_df &lt;-
       pace = as_hms(pace),
       place_overall = as.numeric(place_overall)
       )</code></pre>
-<p>Make winners over time plot</p>
+<p>** DONT COPY IN Make winners over time plot</p>
 <ul>
 <li>look at points 1990-2000 where time is ~1:20:00</li>
 </ul>
@@ -299,10 +299,7 @@ ggplot(aes(x = year, y = official_time, group = 1)) +
 ## #   contry_citizenship &lt;chr&gt;, name_suffix &lt;chr&gt;, 5k &lt;chr&gt;, 10k &lt;chr&gt;,
 ## #   15k &lt;chr&gt;, 20k &lt;chr&gt;, half &lt;chr&gt;, 25k &lt;chr&gt;, 30k &lt;chr&gt;, 35k &lt;chr&gt;,
 ## #   40k &lt;chr&gt;, projected_time &lt;chr&gt;, year &lt;fct&gt;</code></pre>
-<p>Jim Knaub and Franz Nietlispach reported as having an official time of 1:22:17 and 1:25:59 but 1:59 is the fastest marthon ever ran (though not recorded officially)</p>
-<p>–&gt; errors in data (~1:20:00 is fastes here but 1:59 is fasted – but not recorded – <a href="https://www.nytimes.com/2019/10/12/sports/eliud-kipchoge-marathon-record.html" class="uri">https://www.nytimes.com/2019/10/12/sports/eliud-kipchoge-marathon-record.html</a>)</p>
-<p>Plotly</p>
-<p>Fixing time variable – plotly can’t use lubridate</p>
+<p>We are interested in looking at the trends of the winning Boston Marathon times from the 1900’s to 2019. To do this we first needed to convert data and time variables from <code>character</code> to <code>POSIXCT</code>.</p>
 <pre class="r"><code>plotly_win_df = 
   boston_df %&gt;% 
     mutate(
@@ -311,7 +308,7 @@ ggplot(aes(x = year, y = official_time, group = 1)) +
       pace = as.POSIXct(pace, format = &quot;%H:%M:%OS&quot;),
       place_overall = as.numeric(place_overall)
     )</code></pre>
-<p>making new plotly with reformatted time</p>
+<p>From here with the cleaned up variables, we filtered the data set to just show the overall winners.</p>
 <pre class="r"><code>boston_winners = 
 plotly_win_df %&gt;% 
   filter(overall == 1) %&gt;% 
@@ -328,7 +325,13 @@ plotly_win_df %&gt;%
     title = &quot;Boston Marathon Winners by Year&quot;,
          xaxis = list(title = &quot;Year&quot;),
          yaxis = list(title = &quot;Official Time&quot;))</code></pre>
-<p>Marathon records – adding new dataset</p>
+<p>This plot shows that over time, the Boston marathon winners are getting faster. There also seems to be some data that was recorded incorectly. Jim Knaub and Franz Nietlispach are reported as having an official time of 1:22:17 and 1:25:59 but the fastest marathon ever run is 1:59 (though not recorded officially, <a href="https://www.nytimes.com/2019/10/12/sports/eliud-kipchoge-marathon-record.html" class="uri">https://www.nytimes.com/2019/10/12/sports/eliud-kipchoge-marathon-record.html</a>)</p>
+<p>The fastest time ever run (excluding the sub two hour times) for the Boston Marathon was run by Martin E Duffy in 1975, with a time of 2:04:54.</p>
+</div>
+<div id="how-do-the-boston-marathon-winners-compare-to-the-record-marathon-time-for-the-same-year" class="section level2">
+<h2>How do the Boston Marathon winners compare to the record marathon time for the same year?</h2>
+<p>To compare the Boston Marathon with the record marathon times, we found a table from www.topendsports.com where they recorded the fastest marathon time for that year starting from 1908 to 2018 (though not every year is included).</p>
+<p>The plot shows the dramatic decrease in fastest recorded marathon times over the years. In 1908 the fastest recorded time was run by Johnny Hayes in the London Marathon in 2:55:18, compared to the current record holder, Eliud Kipchoge, running the 2:01:39 in the Berlin Marathon in 2018.</p>
 <pre class="r"><code>records_html = 
   read_html(&quot;https://www.topendsports.com/sport/athletics/record-marathon.htm&quot;)
 
