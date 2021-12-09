@@ -25,6 +25,7 @@ library(readxl)
 library(leaflet)
 library(plotly)
 library(scales)
+library(ggplot2)
 ```
 
 # DATA CLEANING (HUGO)
@@ -412,11 +413,6 @@ While there is a downward trend in official times for the open division, there i
 *****
 
 # Weather Analysis
-
-```{r}
-library(ggplot2)
-```
-
 
 ## Data Cleaning
 
