@@ -32,7 +32,6 @@ library(ggplot2)
 ```{r}
 years_1 <- c(1900:2012, 2014)
 years_2 <- c(2015:2019)
-
 importing_data = function(x){
  
   if(str_detect(x, str_c(years_1, collapse = "|"))) {
@@ -43,7 +42,6 @@ importing_data = function(x){
     read_csv(x, na = c("NULL", "", "0"), col_types = "cccicccccccccccccccccciiiiccc")
   }
 }
-
 boston_df <- 
   tibble(list.files("data", full.names = TRUE)) %>% 
   setNames("file_name") %>% 
@@ -226,7 +224,6 @@ boston_df2 = boston_df %>%
   separate(city, into = c("city", "state", "country"), sep = ",") %>% 
   select(-country, -state) %>% 
   writexl::write_xlsx("interactive_map_men.xlsx")
-
 boston_df3 = boston_df  %>% 
   filter(year > 1999) %>% 
   filter(gender_result == 1) %>% 
@@ -240,7 +237,6 @@ boston_df3 = boston_df  %>%
 map_df = read_excel("data/latitude_longitude_winners.xlsx", sheet = 1) %>% 
   select(year, city, latitude, longitude, age, gender, official_time, display_name) %>% 
   rename(place = city) 
-
 map_df2 = read_excel("data/latitude_longitude_winners.xlsx", sheet = 2) %>% 
   select(year, city, latitude, longitude, age, gender, official_time, display_name) %>% 
   rename(place = city) 
@@ -252,28 +248,22 @@ men_open = read_excel("data/geo_winners.xlsx", sheet = 4) %>%
   rename(place = country) %>% 
   separate(official_time, into = c("data", "official_time"), sep = " (?=[^ ]+$)") %>% 
   select(-data) 
-
 lat_long = read_excel("data/lat_long.xlsx") %>% 
   select(-country) %>% 
   rename(place = name)
-
 men_merge <- merge(men_open,lat_long,by="place") %>% 
   rename(display_name = name) %>% 
   mutate(gender = "M") 
-
 men_merge2 = men_merge %>% 
   mutate(age = NA) %>% 
   filter(year > 1900) %>% 
   filter(year < 2000) 
-
 men_total = rbind(men_merge2, map_df)
-
 women_open = read_excel("data/geo_winners.xlsx", sheet = 3) %>% 
   janitor::clean_names() %>% 
   rename(place = country) %>% 
   separate(official_time, into = c("data", "official_time"), sep = " (?=[^ ]+$)") %>% 
   select(-data) 
-
 women_merge = merge(women_open, lat_long, by="place") %>% 
   rename(display_name = name) %>% 
   mutate(gender = "F") 
@@ -282,7 +272,6 @@ women_merge2 = women_merge %>%
   mutate(age = NA) %>% 
   filter(year > 1900) %>% 
   filter(year < 2000) 
-
 woman_total = rbind(women_merge2, map_df2) %>% 
   drop_na(latitude)
 ```
@@ -293,19 +282,15 @@ women_wheelchair = read_excel("data/geo_winners.xlsx", sheet = "women_wheel_chai
     separate(official_time, into = c("data", "official_time"), sep = " (?=[^ ]+$)") %>% 
     select(-data) %>% 
     mutate(gender = "F")
-
 men_wheelchair = read_excel("data/geo_winners.xlsx", sheet = "men_wheel_chair") %>% 
     janitor::clean_names() %>% 
     separate(official_time, into = c("data", "official_time"), sep = " (?=[^ ]+$)") %>% 
     select(-data) %>% 
     mutate(gender = "M")
-
 wheelchair_merge = rbind(women_wheelchair, men_wheelchair) %>% 
   rename(place = country)
-
 wheelchair_total = merge(wheelchair_merge, lat_long, by="place") %>% 
   filter(!(year == 2013))
-
 winners_bind = rbind(women_merge, men_merge)
 ```
 
@@ -331,7 +316,6 @@ map_winners = leaflet(men_total) %>%
   addProviderTiles(providers$CartoDB.Positron) %>% 
   addMarkers(lat = ~latitude, lng = ~longitude,
   popup = paste("Name:", men_total$display_name, "<br>", "Year:", men_total$year,"<br>",  "Official Time:", men_total$official_time, "<br>", "Age:", men_total$age, "<br>", "Gender:", men_total$gender), clusterOptions = markerClusterOptions())
-
 map_winners
 ```
 
@@ -345,7 +329,6 @@ map_winners_women = leaflet(woman_total) %>%
   addProviderTiles(providers$CartoDB.Positron) %>% 
   addMarkers(lat = ~latitude, lng = ~longitude,
   popup = paste("Name:", woman_total$display_name, "<br>", "Year:", woman_total$year,"<br>",  "Official Time:", woman_total$official_time, "<br>", "Age:", woman_total$age, "<br>", "Gender:", woman_total$gender), clusterOptions = markerClusterOptions())
-
 map_winners_women
 ```
 
@@ -355,7 +338,6 @@ This is in contrast to female winners from 1900 and beyond where Africa is the c
 
 ### Plot of Officials Times of Winners by Year in Open Division
 ```{r}
-
 plot2 = winners_bind %>%
   mutate(text_label = 
            str_c("Name: ", display_name, "\nGender: ", gender)) %>% 
@@ -367,7 +349,6 @@ plot2 = winners_bind %>%
     xaxis = list(title = 'Year'),
     yaxis = list(title = 'Marathon Time'), 
     legend = list(title=list(text='Residence')))
-
 plot2
 ```
 
@@ -381,7 +362,6 @@ map_wheelchair = leaflet(wheelchair_total) %>%
   addProviderTiles(providers$CartoDB.Positron) %>% 
   addMarkers(lat = ~latitude, lng = ~longitude,
   popup = paste("Name:", wheelchair_total$name, "<br>", "Year:", wheelchair_total$year,"<br>", "Official Time:", wheelchair_total$official_time, "<br>", "Gender:", wheelchair_total$gender), clusterOptions = markerClusterOptions())
-
 map_wheelchair
 ```
 
@@ -404,7 +384,6 @@ plot3 = wheelchair_total %>%
     xaxis = list(title = 'Year'),
     yaxis = list(title = 'Marathon Time'), 
     legend = list(title=list(text='Residence')))
-
 plot3
 ```
 
@@ -427,19 +406,15 @@ weather = read_excel("data/weather_conditions.xlsx") %>%
   mutate(wind_min = as.numeric(wind_min)) %>% 
   mutate(wind_max = as.numeric(wind_max)) %>% 
   mutate(wind_speed_average = (wind_min + wind_max)/2)
-
 weather2 = weather %>% 
   select(boston_temp, year, wind_speed_average, sky) %>% 
   filter(!(year == 2021)) 
-
 winners_bind2 = winners_bind  %>% 
    filter(year > 1999) 
-
 boston_df2 = boston_df %>% 
      filter(year > 1999) 
   
 merge_weather2 <- merge(weather2,winners_bind2,by="year")
-
 merge_weather_participants = merge(weather2,boston_df2,by="year") %>% 
   mutate(boston_temp = as.numeric(boston_temp)) %>% 
   mutate(seconds = as.numeric(seconds)) 
@@ -466,7 +441,6 @@ plot4 = weather %>%
     xaxis = list(title = 'Year'),
     yaxis = list(title = 'Boston Temperature'), 
     legend = list(title=list(text='Sky')))
-
 plot4
 ```
 *Note datapoint size is related to wind speed.
@@ -504,7 +478,6 @@ plot5 = merge_weather2 %>%
     xaxis = list(title = "Boston's Temperature"),
     yaxis = list(title = 'Official Time'), 
     legend = list(title=list(text='Sky')))
-
 plot5
 ```
 *Note datapoint size is related to wind speed.
@@ -523,7 +496,6 @@ plot6 = merge_weather_participants %>%
     xaxis = list(title = "Boston's Temperature"),
     yaxis = list(title = 'Official Time (seconds)'), 
     legend = list(title=list(text='Sky')))
-
 plot6
 ```
 
@@ -634,7 +606,6 @@ boston_df_gender =
 bar_graph_gender = boston_df_gender %>%
   mutate(pct = n / sum(n),
          pctlabel = paste0(round(pct*100), "%"))
-
 # plot the bars as percentages, 
 # in decending order with bar labels
 ggplot(bar_graph_gender, 
@@ -674,3 +645,6 @@ ggplot(bar_graph_gender,
 
 
 
+© 2021 GitHub, Inc.
+Terms
+Privacy
