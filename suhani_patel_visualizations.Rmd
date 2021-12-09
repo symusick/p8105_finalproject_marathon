@@ -306,6 +306,8 @@ wheelchair_merge = rbind(women_wheelchair, men_wheelchair) %>%
 
 wheelchair_total = merge(wheelchair_merge, lat_long, by="place") %>% 
   filter(!(year == 2013))
+
+winners_bind = rbind(women_merge, men_merge)
 ```
 
 * We cleaned data by filtering for the winners from the men and women's open division. 
@@ -354,7 +356,6 @@ This is in contrast to female winners from 1900 and beyond where Africa is the c
 
 ### Plot of Officials Times of Winners by Year in Open Division
 ```{r}
-winners_bind = rbind(women_merge, men_merge)
 
 plot2 = winners_bind %>%
   mutate(text_label = 
@@ -434,14 +435,20 @@ weather = read_excel("data/weather_conditions.xlsx") %>%
   mutate(wind_speed_average = (wind_min + wind_max)/2)
 
 weather2 = weather %>% 
-  select(boston_temp, year, wind_speed_average) %>% 
+  select(boston_temp, year, wind_speed_average, sky) %>% 
   filter(!(year == 2021)) 
 
 winners_bind2 = winners_bind  %>% 
    filter(year > 1999) 
+
+boston_df2 = boston_df %>% 
+     filter(year > 1999) 
   
 merge_weather2 <- merge(weather2,winners_bind2,by="year")
-  
+
+merge_weather_participants = merge(weather2,boston_df2,by="year") %>% 
+  mutate(boston_temp = as.numeric(boston_temp)) %>% 
+  mutate(seconds = as.numeric(seconds)) 
 ```
 
 * We cleaned data by cleaning up variable names using janitor::clean_names. We also filter out for 2013, the year of the bombing. 
@@ -495,14 +502,14 @@ plot5 = merge_weather2 %>%
   mutate(text_label = 
            str_c("Name: ", display_name, "\nYear: ", year, "\nResidence: place")) %>% 
  plot_ly(
-    x = ~boston_temp, y = ~official_time,  text = ~text_label, color = ~gender, size = ~wind_speed_average,
+    x = ~boston_temp, y = ~official_time,  text = ~text_label, color = ~sky, size = ~wind_speed_average,
           type = "scatter", mode = "markers",  colors = "viridis", 
           sizes = c(50, 700), marker = list(opacity = 0.7)) %>%
   layout(
-    title = 'Champion Times by Temperature',
+    title = 'Champion Times and Weather',
     xaxis = list(title = "Boston's Temperature"),
     yaxis = list(title = 'Official Time'), 
-    legend = list(title=list(text='Gender')))
+    legend = list(title=list(text='Sky')))
 
 plot5
 ```
@@ -510,5 +517,18 @@ plot5
 
 The fastest marathon times in the past 20 years have occured when the temperature is around 55 degrees for men and around 60 degrees for woman. At temperatures 55 and below as well as 85 and above, there tends to be higher wind speeds. Although there are only a few datapoints above 70 degrees, one may hypothesize from the graph that as temperature increases, the fastest marathon time also increases. 
 
+*****
 
+### Comparison between Participants Times and Weather 
 
+```{r}
+plot6 = merge_weather_participants %>% 
+   plot_ly(x = ~boston_temp, y = ~seconds, color = ~sky, type = "box") %>% 
+  layout(
+    title = 'Participants Times by Temperature',
+    xaxis = list(title = "Boston's Temperature"),
+    yaxis = list(title = 'Official Time (seconds)'), 
+    legend = list(title=list(text='Sky')))
+
+plot6
+```
