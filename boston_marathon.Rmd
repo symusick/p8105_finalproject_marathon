@@ -30,7 +30,9 @@ library(httr)
 library(rvest)
 ```
 
-# DATA CLEANING (HUGO)
+# HUGO
+
+# Data Importing and Cleaning  
 ```{r}
 years_1 <- c(1900:2012, 2014)
 years_2 <- c(2015:2019)
@@ -204,7 +206,7 @@ boston_df <-
 
 # SUHANI
 
-# Geographical Analysis of Winners 
+# Geographical Analysis of Champions 
 
 ## Overview 
 
@@ -303,7 +305,7 @@ winners_bind = rbind(women_merge, men_merge)
 
 *****
 
-### Map of Male Champions 
+### Map of Male Champions Residence 
 ```{r}
 map_winners = leaflet(men_total) %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
@@ -312,11 +314,11 @@ map_winners = leaflet(men_total) %>%
 map_winners
 ```
 
-The continent with the largest nuber of male winners from 1900 and beyond is North American, specifically the US, followed by Africa. There are 44 winners from the United States, 20 from Kenya, 10 from Japan. 
+The continent with the largest nuber of male winners from 1900 and beyond is North American, specifically the US, followed by Africa. There are 44 winners from the United States, 20 from Kenya, 10 from Japan. A large portion of the winners came from Eldoret and Meru in Kenya. 
 
 *****
 
-### Map of Female Champions 
+### Map of Female Champions Residence 
 ```{r}
 map_winners_women = leaflet(woman_total) %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
@@ -329,7 +331,7 @@ This is in contrast to female winners from 1900 and beyond where Africa is the c
 
 *****
 
-### Plot of Officials Times of Champions by Year in the Open Division
+### Plot of Official Times and Country of Residence of Champions by Year in the Open Division
 ```{r}
 plot2 = winners_bind %>%
   mutate(text_label = 
@@ -345,7 +347,7 @@ plot2 = winners_bind %>%
 plot2
 ```
 
-Over time, the winning time for both male and female winners has declined. While prior to 1950, most of the winners were from the United States, most of the winners are from Kenya. Additionally, we can see that the lowest marathon times have been from people from Kenya. 
+Over time, the winning time for both male and female winners has declined. While prior to 1950, most of the winners were from the United States and Canada, most of the winners are from Kenya. Additionally, we can see that the lowest marathon times have been from people from Kenya. The fastest times have been from people from Kenya, Ethiopia, and the US with one outlier from Australia. 
 
 *****
 
@@ -359,12 +361,12 @@ map_wheelchair
 ```
 
 
-When assessing wheel chair division map, we can see that 25 winners are from the United States, followed by 19 from Europe, and 10 from Africa. While the male and female open division lack winners from Switzerland, there are 15 winners in the wheel chair division from Switzerland. 
+When assessing wheel chair division map, we can see that 25 winners are from the United States, followed by 19 from Europe, and 10 from Africa. While the male and female open division lack winners from Switzerland, there are 15 winners in the wheel chair division from Switzerland. The fastest time is 1:18 in 2017 by Marcel Hug from Switzerland. 
 
 
 *****
 
-### Plot of Official Times of Champions by Year in Wheel Chair Division 
+### Plot of Official Times and Country of Residence of Champions by Year in Wheel Chair Division 
 ```{r}
 plot3 = wheelchair_total %>%
   mutate(text_label = 
@@ -423,7 +425,7 @@ merge_weather_participants = merge(weather2,boston_df2,by="year") %>%
 
 *****
 
-### Map of Weather during Boston Marathon
+### Plot of Weather during Boston Marathons
 ```{r}
 plot4 = weather %>%
   mutate(text_label = 
@@ -435,16 +437,16 @@ plot4 = weather %>%
     title = 'Weather over Time',
     xaxis = list(title = 'Year'),
     yaxis = list(title = 'Boston Temperature'), 
-    legend = list(title=list(text='Sky')))
+    legend = list(title=list(text='Sky Conditions')))
 plot4
 ```
-*Note datapoint size is related to wind speed.
+*Note datapoint size is related to average wind speed.
 
 Over the past 20 years, the temperature in Boston has generally stayed between 40-70 degrees and is usually a clear day. In 2012, there was a particularly hot marathon day with the tempature in the high 80's. Over the past few years, there has been relativly low wind speeds on average with exception to 2015. 
 
 *****
 
-### Wind Analysis during Boston Marathon
+### Wind Analysis during Boston Marathons
 ```{r}
 ggplot(data = weather)+
   geom_segment(aes(x = year, xend = year, y = wind_min, yend = wind_max, colour = wind_direction), size = 5, alpha = 0.6) + 
@@ -472,12 +474,12 @@ plot5 = merge_weather2 %>%
     title = 'Champion Times and Weather',
     xaxis = list(title = "Boston's Temperature"),
     yaxis = list(title = 'Official Time'), 
-    legend = list(title=list(text='Sky')))
+    legend = list(title=list(text='Sky Conditions')))
 plot5
 ```
-*Note datapoint size is related to wind speed.
+*Note datapoint size is related to average wind speed.
 
-The fastest marathon times in the past 20 years have occured when the temperature is around 55 degrees for men and around 60 degrees for woman. At temperatures 55 and below as well as 85 and above, there tends to be higher wind speeds. Although there are only a few datapoints above 70 degrees, one may hypothesize from the graph that as temperature increases, the fastest marathon time also increases. 
+The fastest marathon times in the past 20 years have occured when the temperature is around 55 degrees for men and around 60 degrees for woman. At temperatures 55 and below as well as 85 and above, there tends to be higher wind speeds. Although there are only a few datapoints above 70 degrees, one may hypothesize from the graph that as temperature increases, the fastest marathon time also increases. The fastest time was run during medium wind speed, 55 degrees and a clear sky. 
 
 *****
 
@@ -490,11 +492,11 @@ plot6 = merge_weather_participants %>%
     title = 'Participants Times by Temperature',
     xaxis = list(title = "Boston's Temperature"),
     yaxis = list(title = 'Official Time (seconds)'), 
-    legend = list(title=list(text='Sky')))
+    legend = list(title=list(text='Sky Conditions')))
 plot6
 ```
 
-As temperature increases, the median marathon time among participants also increases also slightly increases. Furthermore, the lowested median marathon times occur around 55 degrees. We also see that there are many outliers in the higher timepoints. 
+As temperature increases, the median marathon time among participants also increases also slightly increases. Furthermore, the lowested median marathon times occur around 55 degrees. According to a study called "Import of Environmental Parameters on Marathon Running Performance", the ideas tempature for professional runners is 37 degrees but for nonprofessional athletes is around 50 degrees. We also see that there are many outliers in the higher timepoints because there are likely a handful of very slow runners. 
 
 # TAMARA
 
