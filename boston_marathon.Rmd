@@ -547,6 +547,35 @@ This plot shows that over time, the Boston marathon winners are getting faster. 
 
 The fastest time ever run (excluding the sub two hour times) for the Boston Marathon was run by Martin E Duffy in 1975, with a time of 2:04:54. 
 
+## Comparing male and female winners
+
+We can also compare the winners over time by binary gender:
+
+```{r, warnings = FALSE}
+plotly_win_df %>% 
+  filter(gender_result == 1) %>% 
+  mutate(
+    gender = na_if(gender, "U"),
+    gender = as.factor(gender), 
+    gender = recode(gender, "F" = "Female", "M" = "Male")) %>% 
+  group_by(gender) %>% 
+  plot_ly(x = ~year, y = ~format(official_time, "%H:%M:%OS"), 
+          color = ~gender,
+          mode = 'lines', type = 'scatter',
+          hoverinfo = "text",
+          text = 
+            ~paste0("Name: ", display_name,
+                    "\n", "Year: ", year,
+            "\n", "Time: ", format(official_time, "%H:%M:%OS"),
+            "\n", "Pace: ", format(pace, "%H:%M:%OS"))) %>% 
+  layout(
+    title = "Boston Marathon Winners by Year and Binary Gender",
+         xaxis = list(title = "Year"),
+         yaxis = list(title = "Official Time"))
+```
+
+We can see that male and females winners seem to be following the same general trend of decreasing marathon winning times over the year, but that trend is much more pronounced in males than among females. We can also see when the Boston Marathon allowed women to compete in 1972, and that the first ever female winner was Nina Kuscsik, with a time of 3:10:26. The data from 1993 and 1995 seems to have errors, just as the men's times. This data set shows that Jean Driscoll was the female winner for both years with times of 1:34:50 and 1:40:42. The current world record  holder for the fastest female marathon ran is Brigid Kosgei who ran it in 2:14:04 in 2019 (https://www.worldathletics.org/records/by-discipline/road-running/marathon/outdoor/women).
+
 
 ## How do the Boston Marathon winners compare to the record marathon time for the same year? 
 
