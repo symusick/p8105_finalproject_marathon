@@ -355,7 +355,7 @@ Over time, the champions of the Boston marathon have been getting faster. While 
 
 *****
 
-### Map of Champions in the Wheelchair Division
+### Map of Champions Residence in the Wheelchair Division
 ```{r}
 map_wheelchair = leaflet(wheelchair_total) %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
@@ -486,13 +486,13 @@ The fastest marathon times in the past 20 years have occurred when the temperatu
 
 *****
 
-### Comparison between Participants Times and Weather 
+### Comparison between Participant Times and Weather 
 
 ```{r}
 plot6 = merge_weather_participants %>% 
    plot_ly(x = ~boston_temp, y = ~seconds, color = ~sky, type = "box") %>% 
   layout(
-    title = 'Participants Times by Temperature',
+    title = 'Participant Times by Temperature',
     xaxis = list(title = "Boston's Temperature"),
     yaxis = list(title = 'Official Time (seconds)'), 
     legend = list(title=list(text='Sky Conditions')))
