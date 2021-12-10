@@ -741,6 +741,3 @@ ggplot(bar_graph_gender,
 
 
 
-© 2021 GitHub, Inc.
-Terms
-Privacy
