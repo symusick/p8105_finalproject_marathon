@@ -499,7 +499,7 @@ plot6 = merge_weather_participants %>%
 plot6
 ```
 
-As temperature increases, the median marathon time among participants also increases also slightly increases. Furthermore, the lowested median marathon times occur around 55 degrees. According to a study called "Import of Environmental Parameters on Marathon Running Performance", the ideas tempature for professional runners is 37 degrees but for nonprofessional athletes is around 50 degrees. We also see that there are many outliers in the higher timepoints because there are likely a handful of very slow runners. 
+As temperature increases, the median marathon time among participants slightly increases. Furthermore, the lowest median marathon time occured around 55 degrees. According to a study called "Import of Environmental Parameters on Marathon Running Performance", the ideal tempature for professional runners is 37 degrees but for nonprofessional athletes is around 50 degrees. We also see that there are many outliers in the higher timepoints because there are likely a handful of very slow runners. 
 
 # TAMARA
 
