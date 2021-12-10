@@ -595,88 +595,65 @@ marathon_records %>%
 
 # CLAIRE
 
-## Prepare age data
+## Prepare Age Data For Plots
 
 ```{r}
-boston_df_age_plot =
+boston_df_age =
   boston_df %>% 
   select(age) %>%
   drop_na(age)
 ```
 
-## Age distribution overall (counts)
-
-This is plotly: 
+## Age Distribution of Participants in Counts 
 
 ```{r}
-age_plotly_original = 
-boston_df_age_plot %>% 
-  count(age) %>% 
- plot_ly(
+age_plotly = 
+  boston_df_age %>% 
+  count(age) %>%
+  plot_ly(
       x = ~age, y = ~n, color = ~age,
-      type = "bar", colors = "viridis") %>% 
+      type = "bar", colors = "viridis") %>%
   layout(
     xaxis = list(title = "Age"),
-    yaxis = list(title = "Number of Participants")
-)
+    yaxis = list(title = "Number of Participants"))
+
+age_plotly 
 ```
 
-This is plain ggplot:
+To create a bar chart of the age distribution for the Boston Marathon from 1900-2019, we began by selecting the age variable and dropping missing age values. Then, we used plotly to create an interactive plot that shows the age on the x axis and the number of participants at each age year on the y axis. Additionally, there is an option to hover over each bar within the chart to see the exact age and number of participants at that age.
 
-```{r}
-age_ggplot = 
-ggplot(boston_df_age_plot, aes(x = age)) +
-  geom_bar(fill = "cornflowerblue", 
-                 color = "white") +
-  labs(title = "Participants by age", 
-       subtitle = "binwidth = 5 years",
-       x = "Age", y = "Number of participants")
-```
+We notice that the majority of participants in the Boston marathon from 1900-2019 are 35-50 years old, with the most common age being 40. Approximately 21,000 of our 404,727 participants are 40 years old. We also notice that at 5 year age increments, from 40 to 60 years old, ie. 45, 50, 55, there appears to be a higher number of participants compared with the surrounding age years. 
 
-This is plotly from ggplot: 
-
-```{r}
-ggplotly(age_ggplot)
-```
-
-## Histogram of percentages by age 
+## Age Distribution of Participants in %'s
 
 ```{r}
 age_percentage_ggplot = 
-  ggplot(boston_df_age_plot, 
+  ggplot(boston_df_age, 
        aes(x = age, 
            y = ..count.. / sum(..count..))) +
   geom_histogram(fill = "cornflowerblue", 
                  color = "white", 
-                 binwidth = 5) + 
+                 binwidth = 10) + 
   labs(title = "Participants by age", 
        y = "Percent",
-       x = "Age") +
+       x = "Age") + 
+  scale_x_continuous(breaks = seq(5, 85, by = 10)) + 
   scale_y_continuous(labels = percent)
 ```
 
-plotly:
+This histogram shows the age distribution of participants in %'s of total participants in 10 year segments. We see that the age range of 35-45, there is the highest percentage of participants, approximately 33%.  
 
-```{r}
-ggplotly(age_percentage_ggplot)
-```
+## Prepare Gender Data For Plots
 
-## Density plot ages
+? move to top ?
 
-```{r}
-density_plot = 
-boston_df_age_plot %>%
-  ggplot(aes(x = age)) +
-    geom_density(fill = "cornflowerblue", color = "black", alpha = 0.8) +
-    ggtitle("Distribution of age")
-```
+##
+mutate(gender = na_if(gender, "U"), 
+            gender = recode(gender, m = "M"),
+           gender = factor(gender, levels = c("M", "F"), labels = c("male", "female"))) 
+###
 
-```{r}
-ggplotly(density_plot)
-```
-
-## DATA CLEAN GENDER CODE##
-? not sure if we want to put this at top data clean maybe need to decide how much it affects other plots?
+## Begin gender plots
 
 ```{r}
 boston_df_gender =
@@ -689,48 +666,144 @@ boston_df_gender =
   count(gender)
 ```
 
-## Participants by gender (%'s)
+## Participants By Gender (%'s)
 
 ```{r}
-bar_graph_gender = boston_df_gender %>%
-  mutate(pct = n / sum(n),
-         pctlabel = paste0(round(pct*100), "%"))
-# plot the bars as percentages, 
-# in decending order with bar labels
-ggplot(bar_graph_gender, 
+gender_bar_graph = boston_df_gender %>%
+  mutate(pct = (n / sum(n)),
+         pctlabel = paste0(round(pct*100), "%")
+  )
+
+ggplot(gender_bar_graph, 
        aes(x = reorder(gender, -pct),
-           y = pct)) + 
-  geom_bar(stat = "identity", 
-           fill = "indianred3", 
-           color = "black") +
+           y = pct, fill = gender)) + 
+  geom_bar(stat = "identity") +
   geom_text(aes(label = pctlabel), 
             vjust = -0.25) +
   scale_y_continuous(labels = percent) +
   labs(x = "Gender", 
        y = "Percent", 
-       title  = "Participants by gender")
+       title  = "Percent of participants by gender")
 ```
 
-# Participants by gender (counts)
+To create a bar chart for gender distribution, we selected the gender variable, dropped missing values, created a new variable to find the percent of the total that lie within each gender category, by computing n/sum(n), then created a variable that converts the pct variable into a percentage to utilize in the plot. 
+
+The graph shows that from 1900-2019, approximately 66% of Marathon participants were male and 34% of Marathon runners were female. There is a large discrepancy between genders. 
+
+## Prepare Gender Count Change Over Time Data
 
 ```{r}
-bar_graph_frequency = 
-ggplot(bar_graph_gender, 
-       aes(x = gender, 
-           y = n)) + 
-  geom_bar(stat = "identity", 
-           fill = "indianred3",
-           color = "black") +
-  geom_text(aes(label = n), 
-            vjust = -0.5) +
- scale_y_continuous(labels = scales::comma) +
-  labs(x = "Gender", 
-       y = "Frequency", 
-       title  = "Participants by gender")
+gender_timeplot_df =
+    boston_df %>%
+    select(year, gender) %>%
+    mutate(gender = na_if(gender, "U"), 
+            gender = recode(gender, m = "M"),
+           gender = factor(gender, levels = c("M", "F"), labels = c("male", "female"))) %>% 
+  drop_na(gender) %>%
+  drop_na(year) %>%
+  group_by(year, gender) %>%
+  count()
 ```
 
+## Gender Distribution over Time
+
+```{r}
+gender_timeplot =
+ggplot(gender_timeplot_df, aes(x = year, y = n)) + 
+  geom_line(aes(color = gender), size = 1) + xlim(1900, 2019) + labs(x = "Year", 
+       y = "Participants", 
+       title  = "Number of participants over time by gender")
+
+ggplotly(gender_timeplot)
+```
+
+We may wonder if the number of participants in each category has changed over time, and if so by how much? To determine how the distribution of male and female participants has changed over time. We grouped by year and gender, then used counts to determine the number of participants at each year for each gender. Using plotly, you can hover over to see each year, number of participants, and the gender.
+
+The plot reveals that female participation did not begin until ~1972, while male participation began in 1900 - according to our dataset. While there has been an increase in female runners, there is still approximately a ~2,500 participant discrepancy between gender participation. Also of interest is that the graph shows that in 1996, there was a steep increase in participants among both males and females, and this is likely because this was the 100th anniversary of the race.
+
+
+## Prepare country data over time for plot
+
+```{r}
+country_overtime_df = 
+  boston_df %>% 
+  select(country_residence, year) %>%
+  drop_na(country_residence) %>%
+  group_by(year, country_residence) %>%
+  count() %>%
+  filter(n > 200) %>%
+  arrange()
+```
+
+```{r}
+country_overtime_plot =
+ggplot(country_overtime_df, aes(x = year, y = n)) + 
+  geom_line(aes(color = country_residence), size = 1) + xlim(2016, 2019) + labs(x = "Year", 
+       y = "Number of Participants", 
+       title  = "Number of Participants over time by country")
+```
+
+## Popular Countries for Participation
+
+```{r}
+country_counts_df = 
+  boston_df %>% 
+    select(country_residence) %>% 
+    drop_na(country_residence) %>% 
+    group_by(country_residence) %>%
+    count() %>%
+    filter(n > 500) 
+```
+
+## Plot 
+
+```{r}
+popular_country_US = 
+ country_counts_df %>% 
+ plot_ly(
+      x = ~country_residence, y = ~n, color = ~country_residence,
+      type = "bar", colors = "viridis") %>% 
+  layout(
+    xaxis = list(title = "Country"),
+    yaxis = list(title = "Number of Participants"))
+    
+popular_country_US
+```
+## Remove the United States 
+
+```{r}
+popular_country_noUS = 
+  country_counts_df %>% 
+  filter(country_residence != "United States") %>%
+  plot_ly(
+      x = ~country_residence, y = ~n, color = ~country_residence,
+      type = "bar", colors = "viridis") %>% 
+  layout(
+    xaxis = list(title = "Country"),
+    yaxis = list(title = "Number of Participants"))
+
+popular_country_noUS
+```
+## Remove the United States and Canada
+
+```{r}
+popular_country_others = 
+ country_counts_df %>% 
+  filter(country_residence != "United States") %>%
+  filter(country_residence != "Canada") %>%
+ plot_ly(
+      x = ~country_residence, y = ~n, color = ~country_residence,
+      type = "bar", colors = "viridis") %>% 
+  layout(
+    xaxis = list(title = "Age"),
+    yaxis = list(title = "Number of Participants"))
+
+popular_country_others
+```
 
 # SYDNEY
+
+
 
 
 
