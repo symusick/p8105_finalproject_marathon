@@ -780,7 +780,7 @@ popular_country_US
 
 ```{r}
 popular_country_noUS = 
-  country_df %>% 
+  country_counts_df %>% 
   filter(country_residence != "United States") %>%
   plot_ly(
       x = ~country_residence, y = ~n, color = ~country_residence,
@@ -795,7 +795,7 @@ popular_country_noUS
 
 ```{r}
 popular_country_others = 
- country_data %>% 
+ country_counts_df %>% 
   filter(country_residence != "United States") %>%
   filter(country_residence != "Canada") %>%
  plot_ly(
