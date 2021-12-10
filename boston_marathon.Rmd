@@ -46,6 +46,7 @@ importing_data = function(x){
     read_csv(x, na = c("NULL", "", "0"), col_types = "cccicccccccccccccccccciiiiccc")
   }
 }
+
 boston_df <- 
   tibble(list.files("data", full.names = TRUE)) %>% 
   setNames("file_name") %>% 
@@ -201,8 +202,11 @@ boston_df <-
   mutate(country_residence = replace(country_residence, country_residence == "RUS", "Russia")) %>%
   mutate(country_residence = replace(country_residence, country_residence == "Russian", "Russia")) %>%
   filter(!is.na(display_name)) %>% 
-  select(-file_name, -residence, -first_name, -last_name)
+  select(-file_name, -residence, -first_name, -last_name) %>% 
+  rename("country_citizenship" = "contry_citizenship" )
 ```
+
+Data cleaning is 
 
 # SUHANI
 
