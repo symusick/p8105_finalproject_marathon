@@ -1,20 +1,39 @@
 ---
-title: "Boston Marathon"
-output: github_document
+title: "Data Science Final Project"
+author: "Sydney Musick (sm4993), Suhani Patel (sp3903), Tamara Hofer (th2891), Hugo Wang (xw2757), Claire Mobley (cm4070)"
+date: 2021-11-21
+output:
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+    code_folding: hide
+    theme: yeti
+    highlight: haddock
 ---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
 
 ```{r}
 library(tidyverse)
 library(viridis)
 library(ggridges)
 library(patchwork)
+library(readxl)
+library(leaflet)
+library(plotly)
+library(scales)
+library(ggplot2)
+library(httr)
+library(rvest)
 ```
 
 # DATA CLEANING (HUGO)
 ```{r}
 years_1 <- c(1900:2012, 2014)
 years_2 <- c(2015:2019)
-
 importing_data = function(x){
  
   if(str_detect(x, str_c(years_1, collapse = "|"))) {
@@ -25,7 +44,6 @@ importing_data = function(x){
     read_csv(x, na = c("NULL", "", "0"), col_types = "cccicccccccccccccccccciiiiccc")
   }
 }
-
 boston_df <- 
   tibble(list.files("data", full.names = TRUE)) %>% 
   setNames("file_name") %>% 
@@ -184,15 +202,611 @@ boston_df <-
   select(-file_name, -residence, -first_name, -last_name)
 ```
 
-
 # SUHANI
 
+# Geographical Analysis of Winners 
+
+## Overview 
+
+*****
+
+We were interested in creating a map with the locations where winners from the Boston marathon over the past 120 year are from. Additionally, we wanted to examine how the locations of winners changed over time. We also analyzed data from winners from the wheel chair division and compared results to the men and women open divsion. 
+
+## Data Cleaning
+
+*****
+
+```{r}
+boston_df2 = boston_df %>% 
+  filter(year > 1999) %>% 
+  filter(overall == 1) %>% 
+  filter(gender == "M") %>% 
+  select(year, city, state, overall, everything()) %>% 
+  drop_na(city) %>% 
+  separate(city, into = c("city", "state", "country"), sep = ",") %>% 
+  select(-country, -state) %>% 
+  writexl::write_xlsx("interactive_map_men.xlsx")
+boston_df3 = boston_df  %>% 
+  filter(year > 1999) %>% 
+  filter(gender_result == 1) %>% 
+  filter(gender == "F") %>% 
+  select(year, city, state, overall, everything()) %>% 
+  drop_na(city) %>% 
+  writexl::write_xlsx("interactive_map_women.xlsx")
+```
+
+```{r}
+map_df = read_excel("data/latitude_longitude_winners.xlsx", sheet = 1) %>% 
+  select(year, city, latitude, longitude, age, gender, official_time, display_name) %>% 
+  rename(place = city) 
+map_df2 = read_excel("data/latitude_longitude_winners.xlsx", sheet = 2) %>% 
+  select(year, city, latitude, longitude, age, gender, official_time, display_name) %>% 
+  rename(place = city) 
+```
+
+```{r}
+men_open = read_excel("data/geo_winners.xlsx", sheet = 4) %>% 
+  janitor::clean_names() %>% 
+  rename(place = country) %>% 
+  separate(official_time, into = c("data", "official_time"), sep = " (?=[^ ]+$)") %>% 
+  select(-data) 
+lat_long = read_excel("data/lat_long.xlsx") %>% 
+  select(-country) %>% 
+  rename(place = name)
+men_merge <- merge(men_open,lat_long,by="place") %>% 
+  rename(display_name = name) %>% 
+  mutate(gender = "M") 
+men_merge2 = men_merge %>% 
+  mutate(age = NA) %>% 
+  filter(year > 1900) %>% 
+  filter(year < 2000) 
+men_total = rbind(men_merge2, map_df)
+women_open = read_excel("data/geo_winners.xlsx", sheet = 3) %>% 
+  janitor::clean_names() %>% 
+  rename(place = country) %>% 
+  separate(official_time, into = c("data", "official_time"), sep = " (?=[^ ]+$)") %>% 
+  select(-data) 
+women_merge = merge(women_open, lat_long, by="place") %>% 
+  rename(display_name = name) %>% 
+  mutate(gender = "F") 
+  
+women_merge2 = women_merge %>% 
+  mutate(age = NA) %>% 
+  filter(year > 1900) %>% 
+  filter(year < 2000) 
+woman_total = rbind(women_merge2, map_df2) %>% 
+  drop_na(latitude)
+```
+  
+```{r}
+women_wheelchair = read_excel("data/geo_winners.xlsx", sheet = "women_wheel_chair") %>% 
+    janitor::clean_names() %>% 
+    separate(official_time, into = c("data", "official_time"), sep = " (?=[^ ]+$)") %>% 
+    select(-data) %>% 
+    mutate(gender = "F")
+men_wheelchair = read_excel("data/geo_winners.xlsx", sheet = "men_wheel_chair") %>% 
+    janitor::clean_names() %>% 
+    separate(official_time, into = c("data", "official_time"), sep = " (?=[^ ]+$)") %>% 
+    select(-data) %>% 
+    mutate(gender = "M")
+wheelchair_merge = rbind(women_wheelchair, men_wheelchair) %>% 
+  rename(place = country)
+wheelchair_total = merge(wheelchair_merge, lat_long, by="place") %>% 
+  filter(!(year == 2013))
+winners_bind = rbind(women_merge, men_merge)
+```
+
+* We cleaned data by filtering for the winners from the men and women's open division. 
+* Some state data was wrongly included into the variable for city and was reorganized. 
+* Because we were interested in created a map, needed to create latitude and longitude data for the state's and city's winners were from. To do this, exported and loaded our data into Excel and auto-populated the latitude and longitude using Excel's "Geography" feature which can conver geography type data into latitude and longitude. We used the following instruction to covert the data: https://www.mrexcel.com/excel-tips/find-latitude-and-longitude-for-each-city-in-excel/. 
+* Data on the city and/or state a participant was from was only available for the year 2000 and beyond. After graphing this data, we were displeased with the lack of data over time as we only had datapoints for the year 2000 and beyond. Thus, found an additional dataset that would provide information on the locations winners pre-2000 were from using this website: https://www.baa.org/races/boston-marathon/results/champions. 
+* While our geography data included the countries that each winner was from, our origional dataset included more precise locations, the city and the state a participant was from as well as the participants age. Because of this, we used the data available from our origional dataset (the years 2000 and beyond) and combined the missing years for our new data set (pre-2000) to create a map of locations winners were from.
+* When importing our geography data, the official times of runners was imported as a date and a time. We separate this variable and deleted the incorrect protion of this variable. 
+* Because our geograpy data only inlcuded countries were winners were from, we could not use Excel's "Geography" feature. Instead, we found a dataset with the latitude and longitude of common countries throughout the world and merged this dataset by country to add latitude and longitude data. 
+* To combine our origional data and our geography data, we used rbind to vertically merge the datasets. Prior to binding the datasets, we had to ensure the variables in both datasets were named the exact same. Because our origional dataset included age as a variable and we wanted to include it, where possible, in our map, we created a blank age variable in our geography dataset prior to binding. 
+* In the fully binded dataset, we dropped any missing latitide or longitude values. 
+* Using the geophraphy data, we cleaned the wheel chair data to a process similar to above. We additionally excluded the year 2013 due to the bombing. 
+
+
+## Plots
+
+*****
+
+### Map of Male Winners 
+```{r}
+map_winners = leaflet(men_total) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addMarkers(lat = ~latitude, lng = ~longitude,
+  popup = paste("Name:", men_total$display_name, "<br>", "Year:", men_total$year,"<br>",  "Official Time:", men_total$official_time, "<br>", "Age:", men_total$age, "<br>", "Gender:", men_total$gender), clusterOptions = markerClusterOptions())
+map_winners
+```
+
+The continent with the largest nuber of male winners from 1900 and beyond is North American, specifically the US, followed by Africa. There are 44 winners from the United States, 20 from Kenya, 10 from Japan. 
+
+*****
+
+### Map of Female Winners 
+```{r}
+map_winners_women = leaflet(woman_total) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addMarkers(lat = ~latitude, lng = ~longitude,
+  popup = paste("Name:", woman_total$display_name, "<br>", "Year:", woman_total$year,"<br>",  "Official Time:", woman_total$official_time, "<br>", "Age:", woman_total$age, "<br>", "Gender:", woman_total$gender), clusterOptions = markerClusterOptions())
+map_winners_women
+```
+
+This is in contrast to female winners from 1900 and beyond where Africa is the continent with the most winners, closely followed by Europe, and North America. Most of the female winners in Africa are from Kenya. The map for female winners suggests that a participants proximinity to Boston likely does not play a role in their probability of winning the marathon.
+
+*****
+
+### Plot of Officials Times of Winners by Year in Open Division
+```{r}
+plot2 = winners_bind %>%
+  mutate(text_label = 
+           str_c("Name: ", display_name, "\nGender: ", gender)) %>% 
+  plot_ly(
+    x = ~year, y = ~official_time, text = ~text_label, color = ~place,
+    type = "scatter") %>% 
+  layout(
+    title = "Official Times of Male and Female Winners each Year by Winner's Country",
+    xaxis = list(title = 'Year'),
+    yaxis = list(title = 'Marathon Time'), 
+    legend = list(title=list(text='Residence')))
+plot2
+```
+
+Over time, the winning time for both male and female winners has declined. While prior to 1950, most of the winners were from the United States, most of the winners are from Kenya. Additionally, we can see that the lowest marathon times have been from people from Kenya. 
+
+*****
+
+### Map of Winners in Wheel Chair Division
+```{r}
+map_wheelchair = leaflet(wheelchair_total) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addMarkers(lat = ~latitude, lng = ~longitude,
+  popup = paste("Name:", wheelchair_total$name, "<br>", "Year:", wheelchair_total$year,"<br>", "Official Time:", wheelchair_total$official_time, "<br>", "Gender:", wheelchair_total$gender), clusterOptions = markerClusterOptions())
+map_wheelchair
+```
+
+
+When assessing wheel chair division map, we can see that 25 winners are from the United States, followed by 19 from Europe, and 10 from Africa. While the male and female open division lack winners from Switzerland, there are 15 winners in the wheel chair division from Switzerland. 
+
+
+*****
+
+### Plot of Official Times of Winners by Year in Wheel Chair Division 
+```{r}
+plot3 = wheelchair_total %>%
+  mutate(text_label = 
+           str_c("Name: ", name, "\nGender: ", gender)) %>% 
+  plot_ly(
+    x = ~year, y = ~official_time, text = ~text_label, color = ~place,
+    type = "scatter") %>% 
+  layout(
+    title = 'Official Times of Winners each Year in Wheel Chair Division',
+    xaxis = list(title = 'Year'),
+    yaxis = list(title = 'Marathon Time'), 
+    legend = list(title=list(text='Residence')))
+plot3
+```
+
+While there is a downward trend in official times for the open division, there is no trend in official times over time. Many of the winners pre-2000 are from the United States while many of the winners post-2000 are from South Africa. The lowest time recorded is from an individual in Switzerland. 
+
+*****
+
+# Weather Analysis
+
+## Data Cleaning
+
+*****
+
+```{r}
+weather = read_excel("data/weather_conditions.xlsx") %>% 
+  janitor::clean_names() %>% 
+  filter(!(year == 2013)) %>% 
+  separate(wind, into = c("wind_direction", "wind_speed"), sep = "\\s")  %>% 
+  separate(wind_speed, into = c("wind_min", "wind_max"), sep = "-") %>% 
+  mutate(wind_min = as.numeric(wind_min)) %>% 
+  mutate(wind_max = as.numeric(wind_max)) %>% 
+  mutate(wind_speed_average = (wind_min + wind_max)/2)
+weather2 = weather %>% 
+  select(boston_temp, year, wind_speed_average, sky) %>% 
+  filter(!(year == 2021)) 
+winners_bind2 = winners_bind  %>% 
+   filter(year > 1999) 
+boston_df2 = boston_df %>% 
+     filter(year > 1999) 
+  
+merge_weather2 <- merge(weather2,winners_bind2,by="year")
+merge_weather_participants = merge(weather2,boston_df2,by="year") %>% 
+  mutate(boston_temp = as.numeric(boston_temp)) %>% 
+  mutate(seconds = as.numeric(seconds)) 
+```
+
+* We cleaned data by cleaning up variable names using janitor::clean_names. We also filter out for 2013, the year of the bombing. 
+* We sparated the wind variable into direction, min, and max and created an additional variable that takes the average of the wind min and max speed. 
+* We merged this dataset with a dataset with official times to see the relationship between champion winning time and weather. 
+
+## Plots
+
+*****
+
+### Map of Weather during Boston Marathon
+```{r}
+plot4 = weather %>%
+  mutate(text_label = 
+           str_c("Wind Speed Average: ", wind_speed_average)) %>%
+  plot_ly(x = ~year, y = ~boston_temp, text = ~text_label, color= ~ sky, size = ~wind_speed_average,
+          type = "scatter", mode = "markers",  colors = "viridis", 
+          sizes = c(50, 700), marker = list(opacity = 0.7)) %>%
+  layout(
+    title = 'Weather over Time',
+    xaxis = list(title = 'Year'),
+    yaxis = list(title = 'Boston Temperature'), 
+    legend = list(title=list(text='Sky')))
+plot4
+```
+*Note datapoint size is related to wind speed.
+
+Over the past 20 years, the temperature in Boston has generally stayed between 40-70 degrees and is usually a clear day. In 2012, there was a particularly hot marathon day with the tempature in the high 80's. Over the past few years, there has been relativly low wind speeds on average with exception to 2015. 
+
+*****
+
+### Wind Analysis during Boston Marathon
+```{r}
+ggplot(data = weather)+
+  geom_segment(aes(x = year, xend = year, y = wind_min, yend = wind_max, colour = wind_direction), size = 5, alpha = 0.6) + 
+  labs(
+    title = "Wind Speed During Boston's Marathon Over Time",
+    x = "Year",
+    y = "Wind Speed Range (mph)",
+    color='Wind Direction')
+```
+
+In the early 2000's, the wind direction was generally toward the North/north east and recently has been generally toward the west, northwest direction. There has been relatively low wind speed with little wind speed varability the past few years during the Boston marathon. Around 2010, there are relatively higher wind speeds. In 2007, there was a particularly windy marathon with speeds ranging from 20-30 mph. 
+
+*****
+
+### Comparison between Chamption Times and Weather 
+```{r}
+plot5 = merge_weather2 %>%
+  mutate(text_label = 
+           str_c("Name: ", display_name, "\nYear: ", year, "\nResidence: place")) %>% 
+ plot_ly(
+    x = ~boston_temp, y = ~official_time,  text = ~text_label, color = ~sky, size = ~wind_speed_average,
+          type = "scatter", mode = "markers",  colors = "viridis", 
+          sizes = c(50, 700), marker = list(opacity = 0.7)) %>%
+  layout(
+    title = 'Champion Times and Weather',
+    xaxis = list(title = "Boston's Temperature"),
+    yaxis = list(title = 'Official Time'), 
+    legend = list(title=list(text='Sky')))
+plot5
+```
+*Note datapoint size is related to wind speed.
+
+The fastest marathon times in the past 20 years have occured when the temperature is around 55 degrees for men and around 60 degrees for woman. At temperatures 55 and below as well as 85 and above, there tends to be higher wind speeds. Although there are only a few datapoints above 70 degrees, one may hypothesize from the graph that as temperature increases, the fastest marathon time also increases. 
+
+*****
+
+### Comparison between Participants Times and Weather 
+
+```{r}
+plot6 = merge_weather_participants %>% 
+   plot_ly(x = ~boston_temp, y = ~seconds, color = ~sky, type = "box") %>% 
+  layout(
+    title = 'Participants Times by Temperature',
+    xaxis = list(title = "Boston's Temperature"),
+    yaxis = list(title = 'Official Time (seconds)'), 
+    legend = list(title=list(text='Sky')))
+plot6
+```
+
+As temperature increases, the median marathon time among participants also increases also slightly increases. Furthermore, the lowested median marathon times occur around 55 degrees. We also see that there are many outliers in the higher timepoints. 
 
 # TAMARA
+
+#### cleaning data for winner over time plots 
+
+We are interested in looking at the trends of the winning Boston Marathon times from the 1900's to 2019. 
+To do this we first needed to convert data and time variables from `character` to `POSIXCT`. 
+
+```{r}
+plotly_win_df = 
+  boston_df %>% 
+    mutate(
+      official_time = as.POSIXct(official_time, format = "%H:%M:%OS"), 
+      year = as.factor(year),
+      pace = as.POSIXct(pace, format = "%H:%M:%OS"),
+      place_overall = as.numeric(place_overall)
+    )
+
+```
+
+From here with the cleaned up variables, we filtered the data set to just show the overall winners.
+
+```{r}
+
+plotly_win_df %>% 
+  filter(overall == 1) %>% 
+  plot_ly(x = ~year, y = ~format(official_time, "%H:%M:%OS"), 
+          mode = 'lines', type = 'scatter',
+          name = 'Boston Winners',
+          hoverinfo = "text",
+          text = 
+            ~paste0("Name: ", display_name,
+                    "\n", "Year: ", year,
+            "\n", "Time: ", format(official_time, "%H:%M:%OS"),
+            "\n", "Pace: ", format(pace, "%H:%M:%OS"))) %>% 
+  layout(
+    title = "Boston Marathon Winners by Year",
+         xaxis = list(title = "Year"),
+         yaxis = list(title = "Official Time"))
+
+
+```
+
+This plot shows that over time, the Boston marathon winners are getting faster. There also seems to be some data that was recorded incorectly. Jim Knaub and Franz Nietlispach are reported as having an official time of 1:22:17 and 1:25:59 but the fastest marathon ever run is 1:59 (though not recorded officially, https://www.nytimes.com/2019/10/12/sports/eliud-kipchoge-marathon-record.html)
+
+The fastest time ever run (excluding the sub two hour times) for the Boston Marathon was run by Martin E Duffy in 1975, with a time of 2:04:54. 
+
+
+## How do the Boston Marathon winners compare to the record marathon time for the same year? 
+
+
+To compare the Boston Marathon with the record marathon times, we found a table from www.topendsports.com where they recorded the fastest marathon time for that year starting from 1908 to 2018 (though not every year is included). 
+
+
+The plot shows the dramatic decrease in fastest recorded marathon times over the years. In 1908 the fastest recorded time was run by Johnny Hayes in the London Marathon in 2:55:18, compared to the current record holder, Eliud Kipchoge, running the 2:01:39 in the Berlin Marathon in 2018. 
+
+
+```{r}
+
+records_html = 
+  read_html("https://www.topendsports.com/sport/athletics/record-marathon.htm")
+
+
+record_marathon =
+  records_html %>% 
+  html_nodes("table") %>% 
+  html_table(fill = T) %>% 
+  lapply(., function(x) setNames(x, c("time", "date", "athlete", "country", "marathon"))) 
+
+marathon_records = 
+record_marathon %>% 
+  as.data.frame() %>% 
+  mutate(
+    time = as.POSIXct(time, format = "%H:%M:%OS"),
+  ) %>% 
+  separate(date, into = c("month", "day", "year")) %>% 
+    mutate(year = as.numeric(year)) %>% 
+    select(-month, -day)
+
+
+marathon_records %>% 
+  plot_ly(
+    x = ~year, y = ~format(time, "%H:%M:%OS"),
+    mode = 'lines', type = 'scatter',
+    name = "Marathon Record Times",
+    hoverinfo = "text", text = ~paste0(
+        "Name: ", athlete, 
+        "\n", "Year: ", year,
+        "\n", "Time: ", format(time, "%H:%M:%OS"),
+        "\n", "Marathon: ", marathon)) %>% 
+  layout(
+    title = "Record Marathon Times by Year",
+         xaxis = list(title = "Year"),
+         yaxis = list(title = "Official Time")) 
+  
+```
 
 
 # CLAIRE
 
+## Prepare Age Data For Plots
+
+```{r}
+boston_df_age =
+  boston_df %>% 
+  select(age) %>%
+  drop_na(age)
+```
+
+## Age Distribution of Participants in Counts 
+
+```{r}
+age_plotly = 
+  boston_df_age %>% 
+  count(age) %>%
+  plot_ly(
+      x = ~age, y = ~n, color = ~age,
+      type = "bar", colors = "viridis") %>%
+  layout(
+    xaxis = list(title = "Age"),
+    yaxis = list(title = "Number of Participants"))
+
+age_plotly 
+```
+
+To create a bar chart of the age distribution for the Boston Marathon from 1900-2019, we began by selecting the age variable and dropping missing age values. Then, we used plotly to create an interactive plot that shows the age on the x axis and the number of participants at each age year on the y axis. Additionally, there is an option to hover over each bar within the chart to see the exact age and number of participants at that age.
+
+We notice that the majority of participants in the Boston marathon from 1900-2019 are 35-50 years old, with the most common age being 40. Approximately 21,000 of our 404,727 participants are 40 years old. We also notice that at 5 year age increments, from 40 to 60 years old, ie. 45, 50, 55, there appears to be a higher number of participants compared with the surrounding age years. 
+
+## Age Distribution of Participants in %'s
+
+```{r}
+age_percentage_ggplot = 
+  ggplot(boston_df_age, 
+       aes(x = age, 
+           y = ..count.. / sum(..count..))) +
+  geom_histogram(fill = "cornflowerblue", 
+                 color = "white", 
+                 binwidth = 10) + 
+  labs(title = "Participants by age", 
+       y = "Percent",
+       x = "Age") + 
+  scale_x_continuous(breaks = seq(5, 85, by = 10)) + 
+  scale_y_continuous(labels = percent)
+```
+
+This histogram shows the age distribution of participants in %'s of total participants in 10 year segments. We see that the age range of 35-45, there is the highest percentage of participants, approximately 33%.  
+
+## Prepare Gender Data For Plots
+
+? move to top ?
+
+##
+mutate(gender = na_if(gender, "U"), 
+            gender = recode(gender, m = "M"),
+           gender = factor(gender, levels = c("M", "F"), labels = c("male", "female"))) 
+###
+
+## Begin gender plots
+
+```{r}
+boston_df_gender =
+    boston_df %>%
+    select(gender) %>%
+    mutate(gender = na_if(gender, "U"), 
+            gender = recode(gender, m = "M"),
+           gender = factor(gender, levels = c("M", "F"), labels = c("male", "female"))) %>% 
+  drop_na(gender) %>% 
+  count(gender)
+```
+
+## Participants By Gender (%'s)
+
+```{r}
+gender_bar_graph = boston_df_gender %>%
+  mutate(pct = (n / sum(n)),
+         pctlabel = paste0(round(pct*100), "%")
+  )
+
+ggplot(gender_bar_graph, 
+       aes(x = reorder(gender, -pct),
+           y = pct, fill = gender)) + 
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = pctlabel), 
+            vjust = -0.25) +
+  scale_y_continuous(labels = percent) +
+  labs(x = "Gender", 
+       y = "Percent", 
+       title  = "Percent of participants by gender")
+```
+
+To create a bar chart for gender distribution, we selected the gender variable, dropped missing values, created a new variable to find the percent of the total that lie within each gender category, by computing n/sum(n), then created a variable that converts the pct variable into a percentage to utilize in the plot. 
+
+The graph shows that from 1900-2019, approximately 66% of Marathon participants were male and 34% of Marathon runners were female. There is a large discrepancy between genders. 
+
+## Prepare Gender Count Change Over Time Data
+
+```{r}
+gender_timeplot_df =
+    boston_df %>%
+    select(year, gender) %>%
+    mutate(gender = na_if(gender, "U"), 
+            gender = recode(gender, m = "M"),
+           gender = factor(gender, levels = c("M", "F"), labels = c("male", "female"))) %>% 
+  drop_na(gender) %>%
+  drop_na(year) %>%
+  group_by(year, gender) %>%
+  count()
+```
+
+## Gender Distribution over Time
+
+```{r}
+gender_timeplot =
+ggplot(gender_timeplot_df, aes(x = year, y = n)) + 
+  geom_line(aes(color = gender), size = 1) + xlim(1900, 2019) + labs(x = "Year", 
+       y = "Participants", 
+       title  = "Number of participants over time by gender")
+
+ggplotly(gender_timeplot)
+```
+
+We may wonder if the number of participants in each category has changed over time, and if so by how much? To determine how the distribution of male and female participants has changed over time. We grouped by year and gender, then used counts to determine the number of participants at each year for each gender. Using plotly, you can hover over to see each year, number of participants, and the gender.
+
+The plot reveals that female participation did not begin until ~1972, while male participation began in 1900 - according to our dataset. While there has been an increase in female runners, there is still approximately a ~2,500 participant discrepancy between gender participation. Also of interest is that the graph shows that in 1996, there was a steep increase in participants among both males and females, and this is likely because this was the 100th anniversary of the race.
+
+
+## Prepare country data over time for plot
+
+```{r}
+country_overtime_df = 
+  boston_df %>% 
+  select(country_residence, year) %>%
+  drop_na(country_residence) %>%
+  group_by(year, country_residence) %>%
+  count() %>%
+  filter(n > 200) %>%
+  arrange()
+```
+
+```{r}
+country_overtime_plot =
+ggplot(country_overtime_df, aes(x = year, y = n)) + 
+  geom_line(aes(color = country_residence), size = 1) + xlim(2016, 2019) + labs(x = "Year", 
+       y = "Number of Participants", 
+       title  = "Number of Participants over time by country")
+```
+
+## Popular Countries for Participation
+
+```{r}
+country_counts_df = 
+  boston_df %>% 
+    select(country_residence) %>% 
+    drop_na(country_residence) %>% 
+    group_by(country_residence) %>%
+    count() %>%
+    filter(n > 500) 
+```
+
+## Plot 
+
+```{r}
+popular_country_US = 
+ country_counts_df %>% 
+ plot_ly(
+      x = ~country_residence, y = ~n, color = ~country_residence,
+      type = "bar", colors = "viridis") %>% 
+  layout(
+    xaxis = list(title = "Country"),
+    yaxis = list(title = "Number of Participants"))
+    
+popular_country_US
+```
+## Remove the United States 
+
+```{r}
+popular_country_noUS = 
+  country_counts_df %>% 
+  filter(country_residence != "United States") %>%
+  plot_ly(
+      x = ~country_residence, y = ~n, color = ~country_residence,
+      type = "bar", colors = "viridis") %>% 
+  layout(
+    xaxis = list(title = "Country"),
+    yaxis = list(title = "Number of Participants"))
+
+popular_country_noUS
+```
+## Remove the United States and Canada
+
+```{r}
+popular_country_others = 
+ country_counts_df %>% 
+  filter(country_residence != "United States") %>%
+  filter(country_residence != "Canada") %>%
+ plot_ly(
+      x = ~country_residence, y = ~n, color = ~country_residence,
+      type = "bar", colors = "viridis") %>% 
+  layout(
+    xaxis = list(title = "Age"),
+    yaxis = list(title = "Number of Participants"))
+
+popular_country_others
+```
 
 # SYDNEY
 
