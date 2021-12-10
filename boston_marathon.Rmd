@@ -52,8 +52,8 @@ boston_df <-
   mutate(data = map(file_name, importing_data)) %>% 
   unnest(data) %>% 
   mutate(year = readr::parse_number(file_name),
-         city = coalesce(city, residence),
-         display_name = str_replace_all(display_name, "[^a-zA-Z0-9]", " ")) %>% 
+        city = coalesce(city, residence),
+        display_name = str_replace_all(display_name, "[^a-zA-Z0-9]", " ")) %>% 
   mutate(country_residence = replace(country_residence, country_residence == "AHO", "Netherland Antilles")) %>%
   mutate(country_residence = replace(country_residence, country_residence == "ALB", "Albania")) %>%
   mutate(country_residence = replace(country_residence, country_residence == "ALG", "Algeria")) %>%
