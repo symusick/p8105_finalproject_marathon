@@ -310,17 +310,6 @@ wheelchair_total = merge(wheelchair_merge, lat_long, by="place") %>%
 winners_bind = rbind(women_merge, men_merge)
 ```
 
-* We cleaned data by filtering for the winners from the men and women's open division. 
-* Some state data was wrongly included into the variable for city and was reorganized. 
-* Because we were interested in created a map, needed to create latitude and longitude data for the state's and city's winners were from. To do this, exported and loaded our data into Excel and auto-populated the latitude and longitude using Excel's "Geography" feature which can conver geography type data into latitude and longitude. We used the following instruction to covert the data: https://www.mrexcel.com/excel-tips/find-latitude-and-longitude-for-each-city-in-excel/. 
-* Data on the city and/or state a participant was from was only available for the year 2000 and beyond. After graphing this data, we were displeased with the lack of data over time as we only had datapoints for the year 2000 and beyond. Thus, found an additional dataset that would provide information on the locations winners pre-2000 were from using this website: https://www.baa.org/races/boston-marathon/results/champions. 
-* While our geography data included the countries that each winner was from, our origional dataset included more precise locations, the city and the state a participant was from as well as the participants age. Because of this, we used the data available from our origional dataset (the years 2000 and beyond) and combined the missing years for our new data set (pre-2000) to create a map of locations winners were from.
-* When importing our geography data, the official times of runners was imported as a date and a time. We separate this variable and deleted the incorrect protion of this variable. 
-* Because our geograpy data only inlcuded countries were winners were from, we could not use Excel's "Geography" feature. Instead, we found a dataset with the latitude and longitude of common countries throughout the world and merged this dataset by country to add latitude and longitude data. 
-* To combine our origional data and our geography data, we used rbind to vertically merge the datasets. Prior to binding the datasets, we had to ensure the variables in both datasets were named the exact same. Because our origional dataset included age as a variable and we wanted to include it, where possible, in our map, we created a blank age variable in our geography dataset prior to binding. 
-* In the fully binded dataset, we dropped any missing latitide or longitude values. 
-* Using the geophraphy data, we cleaned the wheel chair data to a process similar to above. We additionally excluded the year 2013 due to the bombing. 
-
 
 ## Plots
 
@@ -451,9 +440,6 @@ merge_weather_participants = merge(weather2,boston_df2,by="year") %>%
   mutate(seconds = as.numeric(seconds)) 
 ```
 
-* We cleaned data by cleaning up variable names using janitor::clean_names. We also filter out for 2013, the year of the bombing. 
-* We sparated the wind variable into direction, min, and max and created an additional variable that takes the average of the wind min and max speed. 
-* We merged this dataset with a dataset with official times to see the relationship between champion winning time and weather. 
 
 ## Plots
 
