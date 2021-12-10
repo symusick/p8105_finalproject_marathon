@@ -216,7 +216,7 @@ Data cleaning is
 
 *****
 
-We were interested in creating a map with the locations where winners from the Boston marathon over the past 120 year are from. Additionally, we wanted to examine how the locations of winners changed over time. We also analyzed data from winners from the wheel chair division and compared results to the men and women open divsion. 
+We were interested in creating a map with the locations where winners in the Boston marathon were from over the past 120 years. Additionally, we wanted to examine how winner's location changed over time. We also analyzed data from winners in the wheel chair division and compared the results to the men and women's open divsion. 
 
 ## Data Cleaning
 
@@ -318,7 +318,7 @@ map_winners = leaflet(men_total) %>%
 map_winners
 ```
 
-The continent with the largest nuber of male winners from 1900 and beyond is North American, specifically the US, followed by Africa. There are 44 winners from the United States, 20 from Kenya, 10 from Japan. A large portion of the winners came from Eldoret and Meru in Kenya. 
+The continent with the higherst number of male winners from 1900 and beyond is North America, specifically the US, followed by Africa. There are 44 winners from the United States, 20 from Kenya, 10 from Japan. A large portion of the winners came from Eldoret and Meru in Kenya. 
 
 *****
 
@@ -331,7 +331,7 @@ map_winners_women = leaflet(woman_total) %>%
 map_winners_women
 ```
 
-This is in contrast to female winners from 1900 and beyond where Africa is the continent with the most winners, closely followed by Europe, and North America. Most of the female winners in Africa are from Kenya. The map for female winners suggests that a participants proximinity to Boston likely does not play a role in their probability of winning the marathon.
+Africa is the continent with the most winners in the female open division, closely followed by Europe, and North America. Most of the female winners in Africa are from Kenya. This map suggests that a participant's proximity to Boston likely does not play a role in their probability of winning the marathon.
 
 *****
 
@@ -351,11 +351,11 @@ plot2 = winners_bind %>%
 plot2
 ```
 
-Over time, the winning time for both male and female winners has declined. While prior to 1950, most of the winners were from the United States and Canada, most of the winners are from Kenya. Additionally, we can see that the lowest marathon times have been from people from Kenya. The fastest times have been from people from Kenya, Ethiopia, and the US with one outlier from Australia. 
+Over time, the champions of the Boston marathon have been getting faster. While prior to 1950, most of the winners were from the United States and Canada, most of the winners are now from Kenya. Additionally, we can see that the fastest marathon times have been from people from Kenya followed by Ethiopia, and the US.
 
 *****
 
-### Map of Champions in the Wheel Chair Division
+### Map of Champions in the Wheelchair Division
 ```{r}
 map_wheelchair = leaflet(wheelchair_total) %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
@@ -364,13 +364,12 @@ map_wheelchair = leaflet(wheelchair_total) %>%
 map_wheelchair
 ```
 
-
-When assessing wheel chair division map, we can see that 25 winners are from the United States, followed by 19 from Europe, and 10 from Africa. While the male and female open division lack winners from Switzerland, there are 15 winners in the wheel chair division from Switzerland. The fastest time is 1:18 in 2017 by Marcel Hug from Switzerland. 
+When assessing the map for the wheelchair division, we can see that 25 winners are from the United States, followed by 19 from Europe, and 10 from Africa. While the male and female open division lack winners from Switzerland, there are 15 winners in the wheelchair division from Switzerland. The fastest time is 1:18 in 2017 by Marcel Hug from Switzerland. 
 
 
 *****
 
-### Plot of Official Times and Country of Residence of Champions by Year in Wheel Chair Division 
+### Plot of Official Times and Country of Residence of Champions by Year in Wheelchair Division 
 ```{r}
 plot3 = wheelchair_total %>%
   mutate(text_label = 
@@ -386,7 +385,7 @@ plot3 = wheelchair_total %>%
 plot3
 ```
 
-While there is a downward trend in official times for the open division, there is no trend in official times over time. Many of the winners pre-2000 are from the United States while many of the winners post-2000 are from South Africa. The lowest time recorded is from an individual in Switzerland. 
+While there is a downward trend in the official times for the open division, there is no trend in official times for the wheelchair division. Many of the winners pre-2000 are from the United States while many of the winners post-2000 are from South Africa. The lowest time recorded is from an individual in Switzerland. 
 
 *****
 
@@ -396,7 +395,7 @@ While there is a downward trend in official times for the open division, there i
 
 *****
 
-We were interested in analyzing the weather patterns such as temperature, wind, and sky conditions during the Boston marathon over time. We were also curious if there was a relationship between weather and the winning time and participant average times. 
+We were interested in analyzing the weather patterns such as temperature, wind, and sky conditions during the Boston marathon over time. We were also curious if there was a relationship between weather and the winning time as well as participant average times. 
 
 ## Data Cleaning
 
@@ -446,7 +445,7 @@ plot4
 ```
 *Note datapoint size is related to average wind speed.
 
-Over the past 20 years, the temperature in Boston has generally stayed between 40-70 degrees and is usually a clear day. In 2012, there was a particularly hot marathon day with the tempature in the high 80's. Over the past few years, there has been relativly low wind speeds on average with exception to 2015. 
+Over the past 20 years, the temperature in Boston during the marathons has generally stayed between 40-70 degrees and the sky conditions are usually clear. In 2012, there was a particularly hot marathon day with the temperature in the high 80's. Over the past few years, there have been relatively low wind speeds on average with exception to 2015. 
 
 *****
 
@@ -461,7 +460,7 @@ ggplot(data = weather)+
     color='Wind Direction')
 ```
 
-In the early 2000's, the wind direction was generally toward the North/north east and recently has been generally toward the west, northwest direction. There has been relatively low wind speed with little wind speed varability the past few years during the Boston marathon. Around 2010, there are relatively higher wind speeds. In 2007, there was a particularly windy marathon with speeds ranging from 20-30 mph. 
+In the early 2000's, the wind direction was generally toward the North/northeast and recently has been generally toward the west, northwest direction. There has been relatively low wind speed with little wind speed variability the past few years during the Boston marathon. Around 2010, there were relatively higher wind speeds. In 2007, there was a particularly windy marathon with speeds ranging from 20-30 mph. 
 
 *****
 
@@ -483,7 +482,7 @@ plot5
 ```
 *Note datapoint size is related to average wind speed.
 
-The fastest marathon times in the past 20 years have occured when the temperature is around 55 degrees for men and around 60 degrees for woman. At temperatures 55 and below as well as 85 and above, there tends to be higher wind speeds. Although there are only a few datapoints above 70 degrees, one may hypothesize from the graph that as temperature increases, the fastest marathon time also increases. The fastest time was run during medium wind speed, 55 degrees and a clear sky. 
+The fastest marathon times in the past 20 years have occurred when the temperature is around 55 degrees. At temperatures 55 and below as well as 85 and above, there tends to be higher wind speeds. Although there are only a few data points above 70 degrees, one may hypothesize from the graph that as temperature increases, the fastest marathon time also increases. The fastest time was run was during medium wind speed, 55 degrees, and a clear sky. 
 
 *****
 
