@@ -990,7 +990,7 @@ popular_country_others =
       x = ~country_residence, y = ~n, color = ~country_residence,
       type = "bar", colors = "viridis") %>% 
   layout(
-    xaxis = list(title = "Age"),
+    xaxis = list(title = "Country"),
     yaxis = list(title = "Number of Participants"))
 
 popular_country_others
