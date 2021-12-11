@@ -1,18 +1,45 @@
----
-title: "regression"
-output: github_document
----
-```{r}
+regression
+================
+
+``` r
 library(tidyverse)
+```
+
+    ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+
+    ## ✓ ggplot2 3.3.5     ✓ purrr   0.3.4
+    ## ✓ tibble  3.1.4     ✓ dplyr   1.0.7
+    ## ✓ tidyr   1.1.3     ✓ stringr 1.4.0
+    ## ✓ readr   2.0.1     ✓ forcats 0.5.1
+
+    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+    ## x dplyr::filter() masks stats::filter()
+    ## x dplyr::lag()    masks stats::lag()
+
+``` r
 library(viridis)
+```
+
+    ## Loading required package: viridisLite
+
+``` r
 library(ggridges)
 library(patchwork)
 library(lubridate)
+```
+
+    ## 
+    ## Attaching package: 'lubridate'
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     date, intersect, setdiff, union
+
+``` r
 library(modelr)
 ```
 
-
-```{r}
+``` r
 years_1 <- c(1900:2012, 2014)
 years_2 <- c(2015:2019)
 
@@ -188,6 +215,11 @@ boston_df$continent[boston_df$country_residence %in% c(
   "Australia", 
   "New Zealand"
   )] <- "Australia"
+```
+
+    ## Warning: Unknown or uninitialised column: `continent`.
+
+``` r
 boston_df$continent[boston_df$country_residence %in% c(
   "Algeria",
   "Burundi",
@@ -320,7 +352,8 @@ boston_df$continent[boston_df$country_residence %in% c(
 ```
 
 ## Creating dataset for regression
-```{r}
+
+``` r
 regression_df = boston_df %>%
   select(seconds, age, continent, gender, year, "5k") %>%
   rename(fivek = "5k") %>%
@@ -329,8 +362,12 @@ regression_df = boston_df %>%
   mutate(fivek_seconds = hour(fivetime)*3600 + minute(fivetime)*60 + second(fivetime))
 ```
 
+    ## Warning in .parse_hms(..., order = "HMS", quiet = quiet): Some strings failed to
+    ## parse, or all strings are NAs
+
 ## Creating male and female datasets
-```{r}
+
+``` r
 regression_m_df = regression_df %>%
   filter(gender == "M")
 
@@ -339,14 +376,26 @@ regression_f_df = regression_df %>%
 ```
 
 ## Crude - age, continent by gender
-```{r}
+
+``` r
 crude_model_m = lm(seconds ~ age + continent, data = regression_m_df)
 
 crude_model_m %>% 
   broom::tidy() %>% 
   knitr::kable(digits = 3)
+```
 
+| term                   | estimate | std.error | statistic | p.value |
+|:-----------------------|---------:|----------:|----------:|--------:|
+| (Intercept)            | 8778.932 |   274.501 |    31.981 |   0.000 |
+| age                    |   76.020 |     0.987 |    77.010 |   0.000 |
+| continentAsia          | 1794.641 |   279.120 |     6.430 |   0.000 |
+| continentAustralia     | 1009.802 |   299.782 |     3.368 |   0.001 |
+| continentEurope        | 1165.792 |   274.729 |     4.243 |   0.000 |
+| continentNorth America | 1264.576 |   271.947 |     4.650 |   0.000 |
+| continentSouth America |  384.063 |   283.467 |     1.355 |   0.175 |
 
+``` r
 crude_model_f = lm(seconds ~ age + continent, data = regression_f_df)
 
 crude_model_f %>% 
@@ -354,15 +403,38 @@ crude_model_f %>%
   knitr::kable(digits = 3)
 ```
 
+| term                   |  estimate | std.error | statistic | p.value |
+|:-----------------------|----------:|----------:|----------:|--------:|
+| (Intercept)            | 10817.844 |   317.772 |    34.043 |   0.000 |
+| age                    |    43.542 |     1.115 |    39.057 |   0.000 |
+| continentAsia          |  2568.788 |   332.533 |     7.725 |   0.000 |
+| continentAustralia     |  1560.455 |   351.282 |     4.442 |   0.000 |
+| continentEurope        |  2174.944 |   323.024 |     6.733 |   0.000 |
+| continentNorth America |  2124.174 |   315.727 |     6.728 |   0.000 |
+| continentSouth America |   989.917 |   338.007 |     2.929 |   0.003 |
+
 ## Full model - age, continent, 5k by gender
-```{r}
+
+``` r
 full_model_m = lm(seconds ~ age + continent + fivek_seconds, data = regression_m_df)
 
 full_model_m %>% 
   broom::tidy() %>% 
   knitr::kable(digits = 3)
+```
 
+| term                   | estimate | std.error | statistic | p.value |
+|:-----------------------|---------:|----------:|----------:|--------:|
+| (Intercept)            | -488.195 |   141.232 |    -3.457 |   0.001 |
+| age                    |    9.248 |     0.533 |    17.339 |   0.000 |
+| continentAsia          |  648.669 |   141.174 |     4.595 |   0.000 |
+| continentAustralia     |  254.215 |   151.600 |     1.677 |   0.094 |
+| continentEurope        |  208.146 |   138.943 |     1.498 |   0.134 |
+| continentNorth America |  164.040 |   137.545 |     1.193 |   0.233 |
+| continentSouth America |  142.167 |   143.337 |     0.992 |   0.321 |
+| fivek\_seconds         |    9.127 |     0.026 |   355.204 |   0.000 |
 
+``` r
 full_model_f = lm(seconds ~ age + continent + fivek_seconds, data = regression_f_df)
 
 full_model_f %>% 
@@ -370,8 +442,20 @@ full_model_f %>%
   knitr::kable(digits = 3)
 ```
 
+| term                   |  estimate | std.error | statistic | p.value |
+|:-----------------------|----------:|----------:|----------:|--------:|
+| (Intercept)            | -1101.838 |   157.997 |    -6.974 |   0.000 |
+| age                    |     8.778 |     0.550 |    15.957 |   0.000 |
+| continentAsia          |   626.278 |   161.372 |     3.881 |   0.000 |
+| continentAustralia     |   221.038 |   170.410 |     1.297 |   0.195 |
+| continentEurope        |   331.924 |   156.753 |     2.117 |   0.034 |
+| continentNorth America |   220.911 |   153.222 |     1.442 |   0.149 |
+| continentSouth America |    89.302 |   163.948 |     0.545 |   0.586 |
+| fivek\_seconds         |     9.437 |     0.028 |   342.380 |   0.000 |
+
 ## Comparing models for males
-```{r}
+
+``` r
 crossv_m = 
   crossv_mc(regression_m_df, 100) %>% 
   mutate(train = map(train, as_tibble), test = map(test, as_tibble))
@@ -397,8 +481,11 @@ labs(x = "Model", y = "RMSE") +
 ggtitle("RMSE for Crude and Full Models among Males") 
 ```
 
+![](regression_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
 ## Comparing models for females
-```{r}
+
+``` r
 crossv_f = 
   crossv_mc(regression_f_df, 100) %>% 
   mutate(train = map(train, as_tibble), test = map(test, as_tibble))
@@ -424,4 +511,4 @@ labs(x = "Model", y = "RMSE") +
 ggtitle("RMSE for Crude and Full Models among Females") 
 ```
 
-
+![](regression_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
