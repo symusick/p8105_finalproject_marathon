@@ -202,6 +202,143 @@ boston_df <-
   select(-file_name, -residence, -first_name, -last_name)
 ```
 
+```{r}
+boston_df$continent[boston_df$country_residence %in% c(
+  "Australia", 
+  "New Zealand"
+  )] <- "Australia"
+boston_df$continent[boston_df$country_residence %in% c(
+  "Algeria",
+  "Burundi",
+  "Egypt",
+  "Ethiopia",
+  "Kenya",  
+  "Morocco", 
+  "Nigeria,",  
+  "South Africa", 
+  "Uganda",
+  "Zimbabwe"
+  )] <- "Africa"
+boston_df$continent[boston_df$country_residence %in% c(
+ "China", 
+  "Hong Kong", 
+  "India",            
+  "Indonesia",
+  "Israel",  
+  "Japan",               
+  "Jordan", 
+  "Korea",   
+  "Malaysia",
+  "Mongolia",              
+  "Nepal",  
+  "Oman", 
+  "Pakistan",            
+  "Palestine", 
+  "Philippines", 
+  "Qatar",   
+  "Russia", 
+  "Saudi Arabia",
+  "Singapore",  
+  "Sri Lanka",  
+  "Taipei",               
+  "Taiwan",            
+  "Thailand",  
+  "Vietnam", 
+  "Brunei", 
+  "Kuwait",                         
+  "Macao",
+  "United Arab Emirates"                                  
+  )] <- "Asia"
+boston_df$continent[boston_df$country_residence %in% c(
+  "Canada",  
+  "Mexico", 
+  "Puerto Rico",
+  "United States",
+  "Bahamas",                        
+  "Barbados",
+  "Belize",              
+  "Bermuda", 
+  "Cayman",                
+  "Dominican Republic",  
+  "Jamaica", 
+  "Martinique",
+  "Virgin Islands"                                                           
+  )] <- "North America"
+boston_df$continent[boston_df$country_residence %in% c(
+  "Argentina", 
+  "Bolivia",                
+  "Brazil", 
+  "Chile", 
+  "Colombia",           
+  "Costa Rica",  
+  "Ecuador",  
+  "El Salvador", 
+  "Guatemala",             
+  "Honduras", 
+  "Nicaragua",  
+  "Panama",             
+  "Paraguay", 
+  "Peru",  
+  "Uruguay",            
+  "Venezuela",
+  "Aruba",
+  "Falkland Island",
+  "Trinidad"
+  )] <- "South America"
+boston_df$continent[boston_df$country_residence %in% c(
+  "Albania", 
+  "Andorra",            
+  "Armenia",
+  "Austria",
+  "Bahrain",
+  "Belarus",
+  "Belgium",  
+  "Bulgaria", 
+  "Croatia", 
+  "Cyprus",       
+  "Czech Republic",              
+  "Denmark",   
+  "England", 
+  "Finland",               
+  "France",              
+  "Germany",               
+  "Greece", 
+  "Greenland", 
+  "Hungary",              
+  "Iceland",
+  "Ireland",                             
+  "Italy", 
+  "Latvia",        
+  "Liechtenstein",            
+  "Lithuania", 
+  "Luxembourg", 
+  "Netherland Antilles",          
+  "Netherlands", 
+  "Norway",    
+  "Poland",             
+  "Portugal", 
+  "Romania",
+  "Serbia",              
+  "Slovakia",             
+  "Slovenia",
+  "Spain",            
+  "Sweden",          
+  "Switzerland", 
+  "Turkey",     
+  "Turks and Caicos",
+  "Ukraine",
+  "Bosnia", 
+  "Estonia",                
+  "Faroe Islands", 
+  "Macedonia",             
+  "Malta",     
+  "Moldova",               
+  "Monaco", 
+  "San Marino"  
+  )] <- "Europe"
+```
+
+
 # SUHANI
 
 # Geographical Analysis of Winners 
